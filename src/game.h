@@ -19,13 +19,19 @@ namespace Apchipelago {
 	class Game {
 	public:
 		Game();
+		Game(const Game&) = delete;
 		~Game();
 		void init();
 		void run();
+		void shutdown();
 	private:
-		std::shared_ptr<spdlog::logger> _logger;
+		// game internal stuff
+		unsigned int _numThreads;
+		double _fps;
+		sf::Clock _clock;
 		void _initGraphics();
 		// game posessions
+		std::shared_ptr<spdlog::logger> _logger;
 		std::unique_ptr<sf::RenderWindow> _window;
 		// game options
 		bool _isFullscreen;

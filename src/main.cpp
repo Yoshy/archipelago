@@ -12,5 +12,6 @@ INT WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT) {
 		return 0;
 	}
 	game.run();
+	game.shutdown();
 	return 0;
 }
