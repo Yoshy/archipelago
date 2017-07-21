@@ -3,7 +3,7 @@
 
 //int main() {
 INT WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT) {
-	Apchipelago::Game game;
+	Archipelago::Game game;
 
 	try {
 		game.init();

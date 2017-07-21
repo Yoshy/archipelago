@@ -1,11 +1,11 @@
-#include "game.h"
-#include <spdlog\spdlog.h>
 #include <fstream>
-#include <rapidjson\document.h>
-#include <rapidjson\error\en.h>
+#include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 #include <thread>
+#include "game.h"
+#include "asset_registry.h"
 
-using namespace Apchipelago;
+using namespace Archipelago;
 using namespace std;
 using namespace spdlog;
 using namespace rapidjson;
@@ -81,6 +81,7 @@ void Game::init() {
 	_logger->info("Host has {} cores", _numThreads);
 
 	// Init game subsystems
+	_loadAssets();
 	_initGraphics();
 }
 
@@ -93,8 +94,6 @@ void Game::run() {
 	sf::Time time;
 	unsigned int skippedFrames = 0;
 
-	sf::CircleShape shape(300.f);
-	shape.setFillColor(sf::Color::Green);
 	while (_window->isOpen())
 	{
 		_clock.restart();
@@ -108,10 +107,7 @@ void Game::run() {
 		}
 
 		// Turn over everything
-		shape.setRadius(skippedFrames < 2500 ? skippedFrames : 5000 - skippedFrames);
-		_window->clear();
-		_window->draw(shape);
-		_window->display();
+		_draw();
 
 		// FPS calculation
 		time = _clock.getElapsedTime();
@@ -132,4 +128,19 @@ void Game::_initGraphics() {
 		windowStyle = sf::Style::Fullscreen;
 	};
 	_window = make_unique<sf::RenderWindow>(videoMode, GAME_NAME, windowStyle);
+}
+
+void Game::_loadAssets() {
+	if (!_assetRegistry) {
+		_assetRegistry = make_unique<Archipelago::AssetRegistry>(_logger);
+	}
+	_assetRegistry->loadAssetFromFile(AssetType::Map, "map1", "assets/maps/test_map.json");
+}
+
+void Game::_draw() {
+	_window->clear();
+
+	//_map.draw(*_window);
+
+	_window->display();
 }

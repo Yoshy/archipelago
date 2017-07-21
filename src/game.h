@@ -8,13 +8,16 @@
 #ifndef GAME_H
 #define GAME_H
 
-#include <spdlog\spdlog.h>
+#include <spdlog/spdlog.h>
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include "map.h"
 
 extern const char* GAME_NAME;
 
-namespace Apchipelago {
+namespace Archipelago {
+
+	class AssetRegistry;
 
 	class Game {
 	public:
@@ -30,9 +33,12 @@ namespace Apchipelago {
 		double _fps;
 		sf::Clock _clock;
 		void _initGraphics();
+		void _loadAssets();
+		void _draw();
 		// game posessions
 		std::shared_ptr<spdlog::logger> _logger;
 		std::unique_ptr<sf::RenderWindow> _window;
+		std::unique_ptr<Archipelago::AssetRegistry> _assetRegistry;
 		// game options
 		bool _isFullscreen;
 		int _windowWidth, _windowHeight;
