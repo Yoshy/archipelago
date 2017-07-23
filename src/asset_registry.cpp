@@ -1,24 +1,15 @@
-#include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
 #include "asset_registry.h"
 #include "game.h"
-#include "spdlog/logger.h"
 
 using namespace Archipelago;
-using namespace std;
-using namespace rapidjson;
 
-AssetRegistry::AssetRegistry(std::shared_ptr<spdlog::logger> logger) {
-	_logger = logger;
+AssetRegistry::AssetRegistry() {
 }
 
 AssetRegistry::~AssetRegistry() {
 }
 
-void AssetRegistry::loadAssetFromFile(AssetType assetType, const char* assetName, const char* filename) {
-	std::fstream assetFile;
-
+void AssetRegistry::loadAssetFromFile(AssetType assetType, const std::string& assetName, const std::string& filename) {
 	switch (assetType) {
 	case AssetType::Texture: // load image as texture
 		_loadTexture(assetName, filename);
@@ -29,25 +20,20 @@ void AssetRegistry::loadAssetFromFile(AssetType assetType, const char* assetName
 	}
 }
 
-void AssetRegistry::_loadTexture(const char* assetName, const char* filename) {
-	sf::Texture texture;
-	texture.loadFromFile(filename);
-	_textures[assetName] = texture;
+Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
+	if (_maps.find(mapName) != _maps.end()) {
+		return _maps[mapName];
+	}
+	throw std::out_of_range("Map '" + mapName + "' not found in registry");
 }
 
-void AssetRegistry::_loadMap(const char* assetName, const char* filename) {
-	Archipelago::Map map;
-	fstream mapFile;
-	mapFile.open(filename);
-	string strimap, sLine;
-	while (mapFile >> sLine) {
-		strimap += sLine;
-	}
-	mapFile.close();
-	Document mapDOM;
-	ParseResult pr = mapDOM.Parse<kParseCommentsFlag>(strimap.c_str());
-	if (!pr) {
-		_logger->error("Error while parsing configuration file: '{}', offset: {}", GetParseError_En(pr.Code()), pr.Offset());
-	}
+void AssetRegistry::_loadTexture(const std::string& assetName, const std::string& filename) {
+	_textureAtlas.loadFromFile(assetName, filename);
+}
 
+void AssetRegistry::_loadMap(const std::string& assetName, const std::string& filename) {
+	Archipelago::Map map;
+	map.setTextureAtlas(&_textureAtlas);
+	map.loadFromFile(filename);
+	_maps[assetName] = map;
 }

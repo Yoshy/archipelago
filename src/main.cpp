@@ -5,12 +5,7 @@
 INT WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR strCmdLine, INT) {
 	Archipelago::Game game;
 
-	try {
-		game.init();
-	}
-	catch (...) {
-		return 0;
-	}
+	game.init();
 	game.run();
 	game.shutdown();
 	return 0;

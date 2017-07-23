@@ -1,3 +1,4 @@
+#include "globals.h"
 #include <fstream>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
@@ -22,7 +23,7 @@ Game::~Game() {
 
 void Game::init() {
 	// Init logger
-	_logger = basic_logger_mt("archipelago", "archipelago.log");
+	_logger = basic_logger_mt(LOGGER_NAME, "archipelago.log");
 	_logger->set_level(level::trace);
 	_logger->info("** {} starting **", GAME_NAME);
 
@@ -132,15 +133,15 @@ void Game::_initGraphics() {
 
 void Game::_loadAssets() {
 	if (!_assetRegistry) {
-		_assetRegistry = make_unique<Archipelago::AssetRegistry>(_logger);
+		_assetRegistry = make_unique<Archipelago::AssetRegistry>();
 	}
-	_assetRegistry->loadAssetFromFile(AssetType::Map, "map1", "assets/maps/test_map.json");
+	_assetRegistry->loadAssetFromFile(AssetType::Map, "map1", "assets/maps/test_map2.json");
 }
 
 void Game::_draw() {
 	_window->clear();
 
-	//_map.draw(*_window);
+	_assetRegistry->getMap("map1").draw(*_window);
 
 	_window->display();
 }

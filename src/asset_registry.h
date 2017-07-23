@@ -1,11 +1,11 @@
 #ifndef ASSET_REGISTRY_H
 #define ASSET_REGISTRY_H
 
-#include <spdlog/spdlog.h>
 #include <memory>
 #include <map>
 #include <SFML/Graphics.hpp>
 #include "map.h"
+#include "texture_atlas.h"
 
 namespace Archipelago {
 
@@ -13,15 +13,15 @@ namespace Archipelago {
 
 	class AssetRegistry {
 	public:
-		AssetRegistry(std::shared_ptr<spdlog::logger> logger);
+		AssetRegistry();
 		~AssetRegistry();
-		void loadAssetFromFile(AssetType t, const char* assetName, const char* filename);
+		void loadAssetFromFile(AssetType t, const std::string& assetName, const std::string& filename);
+		Archipelago::Map& getMap(const std::string& mapName);
 	private:
-		void _loadTexture(const char* assetName, const char* filename);
-		void _loadMap(const char* assetName, const char* filename);
-		std::map<std::string, sf::Texture> _textures;
+		void _loadTexture(const std::string& assetName, const std::string& filename);
+		void _loadMap(const std::string& assetName, const std::string& filename);
+		TextureAtlas _textureAtlas;
 		std::map<std::string, Archipelago::Map> _maps;
-		std::shared_ptr<spdlog::logger> _logger;
 	};
 }
 
