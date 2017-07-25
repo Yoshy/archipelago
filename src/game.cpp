@@ -5,6 +5,8 @@
 #include <thread>
 #include "game.h"
 #include "asset_registry.h"
+#include <SFML/Window.hpp>
+#include <cmath>
 
 using namespace Archipelago;
 using namespace std;
@@ -95,16 +97,62 @@ void Game::run() {
 	sf::Time time;
 	unsigned int skippedFrames = 0;
 
-	while (_window->isOpen())
-	{
+	while (_window->isOpen()) {
 		_clock.restart();
 
 		// Events processing
 		sf::Event event;
-		while (_window->pollEvent(event))
-		{
-			if (event.type == sf::Event::Closed)
+		while (_window->pollEvent(event)) {
+			switch (event.type) {
+			case sf::Event::KeyPressed:
+				switch (event.key.code) {
+				case sf::Keyboard::Escape:
+					_window->close();
+					break;
+				case sf::Keyboard::Left:
+					_moveCamera(-static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
+					break;
+				case sf::Keyboard::Right:
+					_moveCamera(static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
+					break;
+				case sf::Keyboard::Up:
+					_moveCamera(0, -static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
+					break;
+				case sf::Keyboard::Down:
+					_moveCamera(0, static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
+					break;
+				}
+			case sf::Event::MouseMoved:
+				if (_isMovingCamera) {
+					_moveCamera((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x, (_prevMouseCoords - sf::Mouse::getPosition(*_window)).y);
+					_prevMouseCoords = sf::Mouse::getPosition(*_window);
+				}
+				_updateMousePositionString();
+				break;
+			case sf::Event::MouseWheelMoved:
+				if (event.mouseWheel.delta < 0) {
+					_zoomCamera(1.5f);
+				}
+				else
+				{
+					_zoomCamera(0.5f);
+				}
+				break;
+			case sf::Event::Closed:
 				_window->close();
+				break;
+			case sf::Event::MouseButtonPressed:
+				if (event.mouseButton.button == sf::Mouse::Right) {
+					_isMovingCamera = true;
+					_prevMouseCoords = sf::Mouse::getPosition(*_window);
+				}
+				break;
+			case sf::Event::MouseButtonReleased:
+				if (event.mouseButton.button == sf::Mouse::Right) {
+					_isMovingCamera = false;
+				}
+				break;
+			}
 		}
 
 		// Turn over everything
@@ -129,19 +177,76 @@ void Game::_initGraphics() {
 		windowStyle = sf::Style::Fullscreen;
 	};
 	_window = make_unique<sf::RenderWindow>(videoMode, GAME_NAME, windowStyle);
+	sf::View v = _window->getView();
+	v.setCenter(_assetRegistry->getMap(MAP_NAME).getCenter());
+	_window->setView(v);
+	_window->setMouseCursorVisible(true);
+	_isMovingCamera = false;
+	_curCameraZoom = 1.0f;
+	_font.loadFromFile("assets/fonts/tahoma.ttf");
+	_mouseCoordsString.setFont(_font);
 }
 
 void Game::_loadAssets() {
 	if (!_assetRegistry) {
 		_assetRegistry = make_unique<Archipelago::AssetRegistry>();
 	}
-	_assetRegistry->loadAssetFromFile(AssetType::Map, "map1", "assets/maps/test_map2.json");
+	_assetRegistry->loadAssetFromFile(AssetType::Map, MAP_NAME, "assets/maps/default_map.json");
+	_prevTile = nullptr;
 }
 
 void Game::_draw() {
 	_window->clear();
 
-	_assetRegistry->getMap("map1").draw(*_window);
+	// Render world
+	_assetRegistry->getMap(MAP_NAME).draw(*_window);
 
+	// Render HUD
+	sf::View v = _window->getView();
+	_window->setView(_window->getDefaultView());
+	_window->draw(_mouseCoordsString);
+	_window->setView(v);
+
+	// Display everything
 	_window->display();
+}
+
+void Game::_moveCamera(float offsetX, float offsetY) {
+	sf::View v = _window->getView();
+	sf::Vector2f viewCenter = v.getCenter();
+	viewCenter.x = viewCenter.x + offsetX;
+	viewCenter.y = viewCenter.y + offsetY;
+	sf::Vector2f w = _assetRegistry->getMap(MAP_NAME).screenToMapCoords(viewCenter);
+	if (w.x < 0 || w.y < 0 || w.x > _assetRegistry->getMap(MAP_NAME).getMapWidth() || w.y > _assetRegistry->getMap(MAP_NAME).getMapHeight()) {
+		return;
+	}
+	v.move(offsetX, offsetY);
+	_window->setView(v);
+}
+
+void Game::_zoomCamera(float zoomFactor) {
+	if (_curCameraZoom * zoomFactor > MAX_CAMERA_ZOOM || _curCameraZoom * zoomFactor < MIN_CAMERA_ZOOM) {
+		return;
+	}
+	sf::View v = _window->getView();
+	v.zoom(zoomFactor);
+	_window->setView(v);
+	_curCameraZoom *= zoomFactor;
+}
+
+void Game::_updateMousePositionString() {
+	sf::Vector2f s = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
+	sf::Vector2f w = _assetRegistry->getMap(MAP_NAME).screenToMapCoords(s);
+	std::string str = "Screen X: " + std::to_string(s.x) + " Y: " + std::to_string(s.y) + "; ";
+	str += "World X:" + std::to_string(w.x) + " Y: " + std::to_string(w.y) + "; ";
+	_mouseCoordsString.setString(str);
+
+	Tile* tile = _assetRegistry->getMap(MAP_NAME).getTileAt(static_cast<int>(floor(w.x)), static_cast<int>(floor(w.y)));
+	if (tile) {
+		if (_prevTile) {
+			_prevTile->getSprite().setColor(sf::Color::White);
+		}
+		tile->getSprite().setColor(sf::Color(255, 255, 255, 127));
+		_prevTile = tile;
+	}
 }

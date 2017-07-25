@@ -13,8 +13,8 @@ namespace Archipelago {
 		const std::string& getName();
 		void setName(const std::string& tileName);
 		void setTexture(const sf::Texture& texture);
-		void setTileRising(unsigned int baseHeight);
-		unsigned int getBaseHeight();
+		void setTileRising(unsigned int rising);
+		unsigned int getTileRising();
 		sf::Sprite& getSprite();
 		void setSpritePosition(float x, float y);
 		void setSpritePosition(sf::Vector2f pos);

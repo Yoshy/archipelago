@@ -68,13 +68,13 @@ void Map::loadFromFile(const std::string& filename) {
 	}
 	// Формируем карту. Каждый тайл - уникальный объект, что позволит при необходимости кастомизировать свойства каждого отдельного тайла карты при необходимости.
 	_tiles.reserve(map_size);
-	float mapX = 0, mapY = 0;
+	double mapX = 0, mapY = 0;
 	Tile tile;
 	for (unsigned int tileID : map_data) {
 		tile = tileAtlas[tileID];
 		_tiles.push_back(tile);
-		sf::Vector2f screenCoords = getScreenFromMapCoords(sf::Vector2f(mapX, mapY));
-		screenCoords.y = screenCoords.y - tile.getBaseHeight();
+		sf::Vector2f screenCoords = mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
+		screenCoords.y = screenCoords.y - tile.getTileRising();
 		_tiles.back().setSpritePosition(screenCoords);
 		mapX++;
 		if (mapX >= _mapWidth) {
@@ -85,12 +85,53 @@ void Map::loadFromFile(const std::string& filename) {
 	logger->trace("Map width: {}, height: {}, _tiles size: {}", _mapWidth, _mapHeight, _tiles.size());
 }
 
-const sf::Vector2f Map::getScreenFromMapCoords(sf::Vector2f mapCoords) {
-	auto logger = spdlog::get(LOGGER_NAME);
+unsigned int Map::getTileWidth() {
+	return _tileWidth;
+}
+
+unsigned int Map::getTileHeight() {
+	return _tileHeight;
+}
+
+unsigned int Map::getMapWidth() {
+	return _mapWidth;
+}
+
+unsigned int Map::getMapHeight() {
+	return _mapHeight;
+}
+
+const sf::Vector2f Map::mapToScreenCoords(sf::Vector2f mapCoords) {
 	sf::Vector2f screenCoords;
-	screenCoords.x = (mapCoords.x * _tileWidth / 2) - (mapCoords.y * _tileWidth / 2) + 800;
+	screenCoords.x = (mapCoords.x - mapCoords.y) * _tileWidth / 2;
 	screenCoords.y = (mapCoords.x + mapCoords.y) * _tileHeight / 2;
 	return screenCoords;
+}
+
+const sf::Vector2f Map::screenToMapCoords(sf::Vector2f screenCoords) {
+	sf::Vector2f mapCoords;
+	mapCoords.x = (screenCoords.x / (_tileWidth / 2) + screenCoords.y / (_tileHeight / 2)) / 2 - 0.5f;
+	mapCoords.y = (screenCoords.y / (_tileHeight / 2) - (screenCoords.x / (_tileWidth / 2))) / 2 + 0.5f;
+	return sf::Vector2f(mapCoords);
+}
+
+const sf::Vector2f Map::getCenter() {
+	sf::Vector2f center;
+	center.x = static_cast<float>(_tileWidth) / 2;
+	center.y = static_cast<float>(_tileHeight * _mapHeight) / 2;
+	return center;
+}
+
+Archipelago::Tile* Map::getTileAt(int mapX, int mapY) {
+	auto logger = spdlog::get(LOGGER_NAME);
+	int tileIdx = mapY * _mapWidth + mapX;
+	if (mapX < 0 || mapX >= static_cast<int>(_mapWidth) || mapY < 0 || mapY >= static_cast<int>(_mapHeight)) {
+		return nullptr;
+	}
+	if (tileIdx >= 0 && tileIdx < static_cast<int>(_tiles.size())) {
+		return &_tiles[tileIdx];
+	}
+	return nullptr;
 }
 
 void Map::draw(sf::RenderWindow& window) {

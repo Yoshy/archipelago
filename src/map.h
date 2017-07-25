@@ -13,7 +13,14 @@ namespace Archipelago {
 		~Map();
 		void setTextureAtlas(TextureAtlas* atlasPtr);
 		void loadFromFile(const std::string& filename);
-		const sf::Vector2f getScreenFromMapCoords(sf::Vector2f mapCoords);
+		unsigned int getTileWidth();
+		unsigned int getTileHeight();
+		unsigned int getMapWidth();
+		unsigned int getMapHeight();
+		const sf::Vector2f mapToScreenCoords(sf::Vector2f mapCoords);
+		const sf::Vector2f screenToMapCoords(sf::Vector2f screenCoords);
+		const sf::Vector2f getCenter();
+		Archipelago::Tile* getTileAt(int mapX, int mapY);
 		void draw(sf::RenderWindow& window);
 	private:
 		unsigned int _mapWidth;

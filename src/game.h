@@ -28,13 +28,22 @@ namespace Archipelago {
 		void run();
 		void shutdown();
 	private:
+		sf::Font _font;
+		sf::Text _mouseCoordsString;
+		Tile* _prevTile;
 		// game internal stuff
 		unsigned int _numThreads;
 		double _fps;
+		float _curCameraZoom;
+		bool _isMovingCamera;
+		sf::Vector2i _prevMouseCoords;
 		sf::Clock _clock;
 		void _initGraphics();
 		void _loadAssets();
 		void _draw();
+		void _moveCamera(float offsetX, float offsetY);
+		void _zoomCamera(float zoomFactor);
+		void _updateMousePositionString();
 		// game posessions
 		std::shared_ptr<spdlog::logger> _logger;
 		std::unique_ptr<sf::RenderWindow> _window;

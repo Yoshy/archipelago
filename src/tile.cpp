@@ -22,11 +22,11 @@ void Tile::setTexture(const sf::Texture& texture) {
 	_sprite.setTexture(texture);
 }
 
-void Tile::setTileRising(unsigned int baseHeight) {
-	_rising = baseHeight;
+void Tile::setTileRising(unsigned int rising) {
+	_rising = rising;
 }
 
-unsigned int Tile::getBaseHeight() {
+unsigned int Tile::getTileRising() {
 	return _rising;
 }
 
