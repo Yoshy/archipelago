@@ -124,7 +124,8 @@ void Game::run() {
 				}
 			case sf::Event::MouseMoved:
 				if (_isMovingCamera) {
-					_moveCamera((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x, (_prevMouseCoords - sf::Mouse::getPosition(*_window)).y);
+					_moveCamera(static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
+						        static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).y));
 					_prevMouseCoords = sf::Mouse::getPosition(*_window);
 				}
 				_updateMousePositionString();
@@ -191,7 +192,9 @@ void Game::_loadAssets() {
 	if (!_assetRegistry) {
 		_assetRegistry = make_unique<Archipelago::AssetRegistry>();
 	}
-	_assetRegistry->loadAssetFromFile(AssetType::Map, MAP_NAME, "assets/maps/default_map.json");
+	_assetRegistry->prepareGoodsAtlas();
+	// map must be loaded last, because it needs other assets, such as goods
+	_assetRegistry->loadMap(MAP_NAME, "assets/maps/default_map.json");
 	_prevTile = nullptr;
 }
 

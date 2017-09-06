@@ -1,33 +1,18 @@
-#include "globals.h"
-#include "map.h"
-#include "spdlog/spdlog.h"
 #include <fstream>
 #include <map>
+#include "globals.h"
+#include "spdlog/spdlog.h"
 #include "json.hpp"
+#include "map.h"
+#include "asset_registry.h"
 
 using namespace Archipelago;
 using namespace std;
 using namespace nlohmann;
 
-Map::Map() {
-
-}
-
-Map::~Map() {
-
-}
-
-void Map::setTextureAtlas(TextureAtlas* atlasPtr) {
-	_atlasPtr = atlasPtr;
-}
-
 void Map::loadFromFile(const std::string& filename) {
 	auto logger = spdlog::get(LOGGER_NAME);
 
-	if (!_atlasPtr) {
-		logger->debug("Texture atlas is not set, can't load map. Set texture atlas before call to Map::loadFromFile");
-		return;
-	}
 	logger->debug("Loading map '{}'", filename);
 	json mapJSON;
 	fstream mapFile;
@@ -45,9 +30,10 @@ void Map::loadFromFile(const std::string& filename) {
 	_tileWidth = mapJSON.at("tileWidth");
 	_tileHeight = mapJSON.at("tileHeight");
 	unsigned int map_size = _mapWidth * _mapHeight;
-	std::vector<unsigned int> map_data = mapJSON.at("map_data");
-	if (map_data.size() != map_size) {
-		logger->debug("map_data size ({}) is not equal to width*height ({}). There is something wrong in map file.", map_data.size(), map_size);
+	std::vector<unsigned int> terrain_layer = mapJSON.at("terrain_layer");
+	std::vector<unsigned int> goods_layer = mapJSON.at("goods_layer");
+	if (terrain_layer.size() != map_size) {
+		logger->debug("terrain_layer size ({}) is not equal to width*height ({}). There is something wrong in map file.", terrain_layer.size(), map_size);
 	}
 
 	// Заполняем временный атлас тайлов, из которых состоит карта
@@ -58,23 +44,26 @@ void Map::loadFromFile(const std::string& filename) {
 		std::string texFileName = tileJSON.at("texFileName");
 		unsigned int tileRising = tileJSON.find("tileRising") != tileJSON.end() ? tileJSON.at("tileRising") : 0;
 		unsigned int texOffsetX = tileJSON.find("texOffsetX") != tileJSON.end() ? tileJSON.at("texOffsetX") : 0;
-		_atlasPtr->loadFromFile(tileName, texFileName);
-		Tile tile;
+		_assets.loadTexture(tileName, texFileName);
+		tileAtlas.insert(std::pair<int, Tile>(id, std::move(Tile(_assets))));
+		Tile& tile = tileAtlas.at(id);
 		tile.setName(tileName);
-		tile.setTexture(_atlasPtr->getTexture(tileName));
-		tile.getSprite().setTextureRect(sf::IntRect(texOffsetX, 0, _tileWidth, _atlasPtr->getTexture(tileName).getSize().y));
+		tile.setTexture(*_assets.getTexture(tileName));
+		tile.getSprite().setTextureRect(sf::IntRect(texOffsetX, 0, _tileWidth, _assets.getTexture(tileName)->getSize().y));
 		tile.setTileRising(tileRising);
-		tileAtlas[id] = tile;
 	}
 	// Формируем карту. Каждый тайл - уникальный объект, что позволит при необходимости кастомизировать свойства каждого отдельного тайла карты при необходимости.
 	_tiles.reserve(map_size);
 	double mapX = 0, mapY = 0;
-	Tile tile;
-	for (unsigned int tileID : map_data) {
-		tile = tileAtlas[tileID];
-		_tiles.push_back(tile);
+	for (unsigned int i = 0; i < map_size; i++) {
+		_tiles.push_back(tileAtlas.at(terrain_layer[i]));
+		// Формат хранения материальных благ в файле: 16-бит-слово, младший байт количество, старший байт тип
+		GoodsType goodsType = static_cast<GoodsType>((goods_layer[i] & 0xFF00) >> 8);
+		if (goodsType != GoodsType::Unknown) {
+			_tiles.back().addGoods(goodsType, goods_layer[i] & 0xFF);
+		};
 		sf::Vector2f screenCoords = mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
-		screenCoords.y = screenCoords.y - tile.getTileRising();
+		screenCoords.y = screenCoords.y - _tiles.back().getTileRising();
 		_tiles.back().setSpritePosition(screenCoords);
 		mapX++;
 		if (mapX >= _mapWidth) {
@@ -135,8 +124,21 @@ Archipelago::Tile* Map::getTileAt(int mapX, int mapY) {
 }
 
 void Map::draw(sf::RenderWindow& window) {
-	for (auto tile : _tiles) {
-		sf::Sprite sprite = tile.getSprite();
-		window.draw(sprite);
+	for (auto& tile : _tiles) {
+		sf::Sprite tileSprite = tile.getSprite();
+		window.draw(tileSprite);
+		for (const auto& goods : tile.getGoodsStackList()) {
+			sf::Sprite goodsSprite;
+			goodsSprite.setTexture(*_assets.getGoodsSpecification(goods.type).icon);
+			auto gsTexSize = goodsSprite.getTexture()->getSize();
+			// На тайл влезет примерно (tileWidth - iconWidth) * 2 иконок товаров
+			for (int n = 0; n < goods.amount; n++) {
+				auto goodsSpritePos = tileSprite.getPosition();
+				goodsSpritePos.x += (_tileWidth / 2) + ((gsTexSize.x / 2) * (n - (goods.amount / 2)));
+				goodsSpritePos.y += (_tileHeight / 2) - (gsTexSize.y / 2);
+				goodsSprite.setPosition(goodsSpritePos);
+				window.draw(goodsSprite);
+			}
+		}
 	}
 }

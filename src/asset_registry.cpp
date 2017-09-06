@@ -1,39 +1,69 @@
+#include <fstream>
 #include "asset_registry.h"
 #include "game.h"
+#include "globals.h"
+#include "spdlog/spdlog.h"
+#include "json.hpp"
 
 using namespace Archipelago;
 
-AssetRegistry::AssetRegistry() {
+void AssetRegistry::loadTexture(const std::string& assetName, const std::string& filename) {
+	sf::Texture texture;
+	if (!texture.loadFromFile(filename)) {
+		spdlog::get(LOGGER_NAME)->trace("Error loading texture '{}' from file '{}'", assetName, filename);
+		return;
+	};
+	_textureAtlas.insert(std::pair<std::string, sf::Texture>(assetName, std::move(texture)));
+	spdlog::get(LOGGER_NAME)->trace("Loaded texture '{}' from file '{}', size {}x{}", assetName, filename, texture.getSize().x, texture.getSize().y);
+	spdlog::get(LOGGER_NAME)->trace("Texture atlas contains {} textures", _textureAtlas.size());
 }
 
-AssetRegistry::~AssetRegistry() {
+void AssetRegistry::loadMap(const std::string& assetName, const std::string& filename) {
+	Archipelago::Map map(*this);
+	map.loadFromFile(filename);
+	_mapAtlas.insert(std::pair<std::string, Archipelago::Map>(assetName, std::move(map)));
+	spdlog::get(LOGGER_NAME)->trace("Loaded map '{}' from file '{}'", assetName, filename);
 }
 
-void AssetRegistry::loadAssetFromFile(AssetType assetType, const std::string& assetName, const std::string& filename) {
-	switch (assetType) {
-	case AssetType::Texture: // load image as texture
-		_loadTexture(assetName, filename);
-		break;
-	case AssetType::Map: // load map
-		_loadMap(assetName, filename);
-		break;
+sf::Texture* AssetRegistry::getTexture(const std::string& textureName) {
+	auto m = _textureAtlas.find(textureName);
+	if (m != _textureAtlas.end()) {
+		return &(m->second);
 	}
+	std::string s("Texture '" + textureName + "' not found in registry");
+	spdlog::get(LOGGER_NAME)->error(s);
+	return nullptr;
 }
 
 Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
-	if (_maps.find(mapName) != _maps.end()) {
-		return _maps[mapName];
+	auto m = _mapAtlas.find(mapName);
+	if (m != _mapAtlas.end()) {
+		return m->second;
 	}
-	throw std::out_of_range("Map '" + mapName + "' not found in registry");
+	std::string s("Map '" + mapName + "' not found in registry");
+	spdlog::get(LOGGER_NAME)->error(s);
+	throw std::out_of_range(s);
 }
 
-void AssetRegistry::_loadTexture(const std::string& assetName, const std::string& filename) {
-	_textureAtlas.loadFromFile(assetName, filename);
-}
-
-void AssetRegistry::_loadMap(const std::string& assetName, const std::string& filename) {
-	Archipelago::Map map;
-	map.setTextureAtlas(&_textureAtlas);
-	map.loadFromFile(filename);
-	_maps[assetName] = map;
+void AssetRegistry::prepareGoodsAtlas() {
+	spdlog::get(LOGGER_NAME)->trace("AssetRegistry::prepareGoodsAtlas started...");
+	std::string filename("assets/goods/goods_specification.json");
+	nlohmann::json goodsSpecJSON;
+	std::fstream goodsSpecFile;
+	goodsSpecFile.open(filename);
+	if (goodsSpecFile.fail()) {
+		spdlog::get(LOGGER_NAME)->error("AssetRegistry::prepareGoodsAtlas failed. Error opening goods_specification file '{}'", filename);
+		return;
+	}
+	goodsSpecFile >> goodsSpecJSON;
+	goodsSpecFile.close();
+	for (auto goodsSpec : goodsSpecJSON) {
+		GoodsSpecification gs;
+		gs.name = std::move(goodsSpec["name"].get<std::string>());
+		loadTexture(goodsSpec["name"], goodsSpec["icon"]);
+		gs.icon = getTexture(goodsSpec["name"]);
+		_goodsAtlas.insert(std::pair<GoodsType, Archipelago::GoodsSpecification>(static_cast<GoodsType>(goodsSpec["type"].get<int>()), std::move(gs)));
+		spdlog::get(LOGGER_NAME)->trace("Goods Specification loaded: '{}'", (goodsSpec["name"]).get<std::string>());
+	}
+	spdlog::get(LOGGER_NAME)->trace("Goods atlas contains {} goods specifications", _goodsAtlas.size());
 }

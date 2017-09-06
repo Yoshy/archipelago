@@ -3,13 +3,15 @@
 
 #include "SFML/Graphics.hpp"
 #include <string>
+#include "goods.h"
 
 namespace Archipelago {
 
+	class AssetRegistry;
+
 	class Tile {
 	public:
-		Tile();
-		~Tile();
+		Tile(AssetRegistry& assets);
 		const std::string& getName();
 		void setName(const std::string& tileName);
 		void setTexture(const sf::Texture& texture);
@@ -18,10 +20,14 @@ namespace Archipelago {
 		sf::Sprite& getSprite();
 		void setSpritePosition(float x, float y);
 		void setSpritePosition(sf::Vector2f pos);
+		void addGoods(GoodsType type, int amount);
+		const std::vector<GoodsStack>& getGoodsStackList() { return _goodsStackList; };
 	private:
 		std::string _name;
 		unsigned int _rising;
-		sf::Sprite _sprite;
+		AssetRegistry& _assets;
+		sf::Sprite _terrain_sprite;
+		std::vector<GoodsStack> _goodsStackList;
 	};
 
 }

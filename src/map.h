@@ -3,15 +3,14 @@
 
 #include <vector>
 #include "tile.h"
-#include "texture_atlas.h"
 
 namespace Archipelago {
 
+	class AssetRegistry;
+
 	class Map {
 	public:
-		Map();
-		~Map();
-		void setTextureAtlas(TextureAtlas* atlasPtr);
+		Map(AssetRegistry& assets) : _assets(assets) {};
 		void loadFromFile(const std::string& filename);
 		unsigned int getTileWidth();
 		unsigned int getTileHeight();
@@ -28,7 +27,7 @@ namespace Archipelago {
 		unsigned int _tileWidth;
 		unsigned int _tileHeight;
 		std::vector<Archipelago::Tile> _tiles;
-		TextureAtlas* _atlasPtr;
+		AssetRegistry& _assets;
 	};
 
 }
