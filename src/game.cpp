@@ -1,17 +1,15 @@
 #include "globals.h"
 #include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
 #include <thread>
 #include "game.h"
 #include "asset_registry.h"
 #include <SFML/Window.hpp>
 #include <cmath>
+#include "json.hpp"
 
 using namespace Archipelago;
 using namespace std;
 using namespace spdlog;
-using namespace rapidjson;
 
 const char* GAME_NAME = "Archipelago";
 
@@ -32,56 +30,42 @@ void Game::init() {
 	// Load, parse and apply configuration settings
 	fstream configFile;
 	string configString;
-	configFile.open("config.json");
-	string s;
-	while (configFile >> s) {
-		configString += s;
-	}
-	configFile.close();
-	Document configDOM;
-	ParseResult pr = configDOM.Parse<kParseCommentsFlag>(configString.c_str());
-	if (!pr) {
-		_logger->error("Error while parsing configuration file: '{}', offset: {}", GetParseError_En(pr.Code()), pr.Offset());
-	}
-	if (configDOM.HasMember("logging") && configDOM["logging"].IsObject()) {
-		const Value& loggingObject = configDOM["logging"];
-		Value::ConstMemberIterator iter = loggingObject.FindMember("level");
-		if (iter != loggingObject.MemberEnd() && iter->value.IsUint()) {
-			unsigned int logLevel = iter->value.GetUint();
-			if (logLevel > 6) {
-				logLevel = 6;
-			}
-			_logger->trace("Logging level set to " + to_string(logLevel));
-			_logger->set_level(static_cast<level::level_enum>(logLevel));
-		}
-	}
-	else {
-		_logger->trace("No logLevel found in configuration file, default log level is 0 (trace)");
-	}
 
-	if (configDOM.HasMember("video") && configDOM["video"].IsObject()) {
-		const Value& videoSettings = configDOM["video"];
-		Value::ConstMemberIterator iter;
-		iter= videoSettings.FindMember("isFullscreen");
-		if (iter != videoSettings.MemberEnd() && iter->value.IsBool()) {
-			_isFullscreen = iter->value.GetBool();
-			_logger->trace("fullscreen: {}", _isFullscreen);
-		}
-		iter = videoSettings.FindMember("windowWidth");
-		if (iter != videoSettings.MemberEnd() && iter->value.IsUint()) {
-			_windowWidth = iter->value.GetUint();
-			_logger->trace("windowWidth: {}", _windowWidth);
-		}
-		iter = videoSettings.FindMember("windowHeight");
-		if (iter != videoSettings.MemberEnd() && iter->value.IsUint()) {
-			_windowHeight = iter->value.GetUint();
-			_logger->trace("windowHeight: {}", _windowHeight);
-		}
-		iter = videoSettings.FindMember("enableVSync");
-		if (iter != videoSettings.MemberEnd() && iter->value.IsBool()) {
-			_enable_vsync = iter->value.GetBool();
-			_logger->trace("enableVSync: {}", _enable_vsync);
-		}
+	nlohmann::json configJSON;
+	configFile.open("config.json");
+	if (configFile.fail()) {
+		_logger->error("Game::init failed. Error opening configuration file 'config.json'");
+		return;
+	}
+	configFile >> configJSON;
+	configFile.close();
+
+	unsigned int logLevel;
+	try {
+		logLevel = configJSON.at("logging").at("level");
+		if (logLevel > 6) {
+			logLevel = 6;
+		};
+	}
+	catch (std::out_of_range& e) {
+		_logger->trace("No 'logging'.'level' option found in configuration file, default log level is 0 (trace). Error: {}", e.what());
+	}
+	_logger->trace("Logging level set to " + to_string(logLevel));
+	_logger->set_level(static_cast<level::level_enum>(logLevel));
+
+	try {
+		_isFullscreen = configJSON.at("video").at("isFullscreen");
+		_logger->trace("isFullscreen: {}", _isFullscreen);
+		_windowWidth = configJSON.at("video").at("windowWidth");
+		_logger->trace("windowWidth: {}", _windowWidth);
+		_windowHeight = configJSON.at("video").at("windowHeight");
+		_logger->trace("windowHeight: {}", _windowHeight);
+		_enable_vsync = configJSON.at("video").at("enableVSync");
+		_logger->trace("enableVSync: {}", _enable_vsync);
+	}
+	catch (const std::out_of_range& e) {
+		_logger->error("Error parsing 'video' configuration object: {}", e.what());
+		exit(-1);
 	}
 
 	// Determine some hardware facts

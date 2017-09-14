@@ -24,16 +24,23 @@ void Map::loadFromFile(const std::string& filename) {
 	mapFile >> mapJSON;
 	mapFile.close();
 
-	// Ошибки не проверяем, считаем, что json-файл карты корректный. Если упадём, то нечо лезть, куда не надо.
-	_mapWidth = mapJSON.at("mapWidth");
-	_mapHeight = mapJSON.at("mapHeight");
-	_tileWidth = mapJSON.at("tileWidth");
-	_tileHeight = mapJSON.at("tileHeight");
-	unsigned int map_size = _mapWidth * _mapHeight;
-	std::vector<unsigned int> terrain_layer = mapJSON.at("terrain_layer");
-	std::vector<unsigned int> goods_layer = mapJSON.at("goods_layer");
-	if (terrain_layer.size() != map_size) {
-		logger->debug("terrain_layer size ({}) is not equal to width*height ({}). There is something wrong in map file.", terrain_layer.size(), map_size);
+	unsigned int map_size = 0;
+	std::vector<unsigned int> terrain_layer;
+	std::vector<unsigned int> goods_layer;
+	try {
+		_mapWidth = mapJSON.at("mapWidth");
+		_mapHeight = mapJSON.at("mapHeight");
+		_tileWidth = mapJSON.at("tileWidth");
+		_tileHeight = mapJSON.at("tileHeight");
+		map_size = _mapWidth * _mapHeight;
+		terrain_layer = std::move(mapJSON.at("terrain_layer").get<std::vector<unsigned int>>());
+		goods_layer = std::move(mapJSON.at("goods_layer").get<std::vector<unsigned int>>());
+		if (terrain_layer.size() != map_size) {
+			logger->debug("terrain_layer size ({}) is not equal to width*height ({}). There is something wrong in map file.", terrain_layer.size(), map_size);
+		}
+	}
+	catch (std::out_of_range& e) {
+		logger->error("Map::loadFromFile: Can't parse map file: {}", e.what());
 	}
 
 	// Заполняем временный атлас тайлов, из которых состоит карта

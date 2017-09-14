@@ -52,18 +52,24 @@ void AssetRegistry::prepareGoodsAtlas() {
 	std::fstream goodsSpecFile;
 	goodsSpecFile.open(filename);
 	if (goodsSpecFile.fail()) {
-		spdlog::get(LOGGER_NAME)->error("AssetRegistry::prepareGoodsAtlas failed. Error opening goods_specification file '{}'", filename);
+		spdlog::get(LOGGER_NAME)->error("AssetRegistry::prepareGoodsAtlas failed. Error opening goods specification file '{}'", filename);
 		return;
 	}
 	goodsSpecFile >> goodsSpecJSON;
 	goodsSpecFile.close();
-	for (auto goodsSpec : goodsSpecJSON) {
-		GoodsSpecification gs;
-		gs.name = std::move(goodsSpec["name"].get<std::string>());
-		loadTexture(goodsSpec["name"], goodsSpec["icon"]);
-		gs.icon = getTexture(goodsSpec["name"]);
-		_goodsAtlas.insert(std::pair<GoodsTypeId, Archipelago::GoodsSpecification>(static_cast<GoodsTypeId>(goodsSpec["id"].get<int>()), std::move(gs)));
-		spdlog::get(LOGGER_NAME)->trace("Goods Specification loaded: '{}'", (goodsSpec["name"]).get<std::string>());
+	try {
+		for (auto goodsSpec : goodsSpecJSON) {
+			GoodsSpecification gs;
+			gs.name = std::move(goodsSpec.at("name").get<std::string>());
+			loadTexture(goodsSpec.at("name"), goodsSpec.at("icon"));
+			gs.icon = getTexture(goodsSpec.at("name"));
+			_goodsAtlas.insert(std::pair<GoodsTypeId, Archipelago::GoodsSpecification>(static_cast<GoodsTypeId>(goodsSpec.at("id").get<int>()), std::move(gs)));
+			spdlog::get(LOGGER_NAME)->trace("Goods Specification loaded: '{}'", (goodsSpec.at("name")).get<std::string>());
+		}
+	}
+	catch (std::out_of_range& e) {
+		spdlog::get(LOGGER_NAME)->error("AssetRegistry::prepareGoodsAtlas: Can't parse goods specifications: {}", e.what());
+		exit(-1);
 	}
 	spdlog::get(LOGGER_NAME)->trace("Goods atlas contains {} goods specifications", _goodsAtlas.size());
 }
