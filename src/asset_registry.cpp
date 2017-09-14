@@ -62,7 +62,7 @@ void AssetRegistry::prepareGoodsAtlas() {
 		gs.name = std::move(goodsSpec["name"].get<std::string>());
 		loadTexture(goodsSpec["name"], goodsSpec["icon"]);
 		gs.icon = getTexture(goodsSpec["name"]);
-		_goodsAtlas.insert(std::pair<GoodsType, Archipelago::GoodsSpecification>(static_cast<GoodsType>(goodsSpec["type"].get<int>()), std::move(gs)));
+		_goodsAtlas.insert(std::pair<GoodsTypeId, Archipelago::GoodsSpecification>(static_cast<GoodsTypeId>(goodsSpec["id"].get<int>()), std::move(gs)));
 		spdlog::get(LOGGER_NAME)->trace("Goods Specification loaded: '{}'", (goodsSpec["name"]).get<std::string>());
 	}
 	spdlog::get(LOGGER_NAME)->trace("Goods atlas contains {} goods specifications", _goodsAtlas.size());

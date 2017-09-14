@@ -20,7 +20,7 @@ namespace Archipelago {
 		sf::Sprite& getSprite();
 		void setSpritePosition(float x, float y);
 		void setSpritePosition(sf::Vector2f pos);
-		void addGoods(GoodsType type, int amount);
+		void addGoods(GoodsTypeId type, int amount);
 		const std::vector<GoodsStack>& getGoodsStackList() { return _goodsStackList; };
 	private:
 		std::string _name;

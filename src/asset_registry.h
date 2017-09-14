@@ -11,7 +11,7 @@ namespace Archipelago {
 
 	typedef std::map<std::string, sf::Texture> texture_atlas_t;
 	typedef std::map<std::string, Archipelago::Map> map_atlas_t;
-	typedef std::map<GoodsType, Archipelago::GoodsSpecification> goods_atlas_t;
+	typedef std::map<GoodsTypeId, Archipelago::GoodsSpecification> goods_atlas_t;
 
 	enum class AssetType { Texture, Map, Resource };
 
@@ -22,8 +22,8 @@ namespace Archipelago {
 		sf::Texture* getTexture(const std::string& textureName);
 		Archipelago::Map& getMap(const std::string& mapName);
 		void prepareGoodsAtlas();
-		const std::string& getGoodsName(GoodsType type) { return _goodsAtlas.at(type).name; };
-		const GoodsSpecification& getGoodsSpecification(GoodsType type) { return _goodsAtlas.at(type); }
+		const std::string& getGoodsName(GoodsTypeId type) { return _goodsAtlas.at(type).name; };
+		const GoodsSpecification& getGoodsSpecification(GoodsTypeId type) { return _goodsAtlas.at(type); }
 	private:
 		texture_atlas_t _textureAtlas;
 		map_atlas_t _mapAtlas;

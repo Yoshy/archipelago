@@ -57,11 +57,24 @@ void Map::loadFromFile(const std::string& filename) {
 	double mapX = 0, mapY = 0;
 	for (unsigned int i = 0; i < map_size; i++) {
 		_tiles.push_back(tileAtlas.at(terrain_layer[i]));
-		// Формат хранения материальных благ в файле: 16-бит-слово, младший байт количество, старший байт тип
-		GoodsType goodsType = static_cast<GoodsType>((goods_layer[i] & 0xFF00) >> 8);
-		if (goodsType != GoodsType::Unknown) {
-			_tiles.back().addGoods(goodsType, goods_layer[i] & 0xFF);
-		};
+		// Формат хранения материальных благ в файле: 32-битное число, каждый байт обозначает доступный на тайле тип ресурса, т.о.
+		// на одном тайле может быть доступно до четырёх типов ресурсов.
+		GoodsTypeId goodsType1 = static_cast<GoodsTypeId>((goods_layer[i] & 0xFF000000) >> 24);
+		GoodsTypeId goodsType2 = static_cast<GoodsTypeId>((goods_layer[i] & 0x00FF0000) >> 16);
+		GoodsTypeId goodsType3 = static_cast<GoodsTypeId>((goods_layer[i] & 0x0000FF00) >> 8);
+		GoodsTypeId goodsType4 = static_cast<GoodsTypeId>((goods_layer[i] & 0x000000FF));
+
+		GoodsTypeId goodsType;
+		uint32_t bitMask = 0xFF000000;
+		unsigned int shift = 24;
+		for (unsigned int goodsIdx = 0; goodsIdx < 4; goodsIdx++) {
+			goodsType = static_cast<GoodsTypeId>((goods_layer[i] & bitMask) >> shift);
+			shift -= 8;
+			bitMask = bitMask >> 8;
+			if (goodsType != GoodsTypeId::Unknown) {
+				_tiles.back().addGoods(goodsType, 1);
+			};
+		}
 		sf::Vector2f screenCoords = mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
 		screenCoords.y = screenCoords.y - _tiles.back().getTileRising();
 		_tiles.back().setSpritePosition(screenCoords);
@@ -127,14 +140,16 @@ void Map::draw(sf::RenderWindow& window) {
 	for (auto& tile : _tiles) {
 		sf::Sprite tileSprite = tile.getSprite();
 		window.draw(tileSprite);
-		for (const auto& goods : tile.getGoodsStackList()) {
-			sf::Sprite goodsSprite;
-			goodsSprite.setTexture(*_assets.getGoodsSpecification(goods.type).icon);
-			auto gsTexSize = goodsSprite.getTexture()->getSize();
+		if (_isGoodsVisible) {
+			auto goodsStack = tile.getGoodsStackList();
+			unsigned int numGoods = goodsStack.size();
 			// На тайл влезет примерно (tileWidth - iconWidth) * 2 иконок товаров
-			for (int n = 0; n < goods.amount; n++) {
+			for (unsigned int g = 0; g < numGoods; g++) {
+				sf::Sprite goodsSprite;
+				goodsSprite.setTexture(*_assets.getGoodsSpecification(goodsStack[g].type).icon);
+				auto gsTexSize = goodsSprite.getTexture()->getSize();
 				auto goodsSpritePos = tileSprite.getPosition();
-				goodsSpritePos.x += (_tileWidth / 2) + ((gsTexSize.x / 2) * (n - (goods.amount / 2)));
+				goodsSpritePos.x += (_tileWidth / 2) + ((gsTexSize.x) * (g - (numGoods / 2)));
 				goodsSpritePos.y += (_tileHeight / 2) - (gsTexSize.y / 2);
 				goodsSprite.setPosition(goodsSpritePos);
 				window.draw(goodsSprite);

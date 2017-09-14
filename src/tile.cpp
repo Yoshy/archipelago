@@ -43,6 +43,6 @@ void Tile::setSpritePosition(sf::Vector2f pos) {
 	_terrain_sprite.setPosition(pos);
 }
 
-void Tile::addGoods(GoodsType type, int amount) {
+void Tile::addGoods(GoodsTypeId type, int amount) {
 	_goodsStackList.push_back({type, amount});
 }

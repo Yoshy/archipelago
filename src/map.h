@@ -10,7 +10,7 @@ namespace Archipelago {
 
 	class Map {
 	public:
-		Map(AssetRegistry& assets) : _assets(assets) {};
+		Map(AssetRegistry& assets) : _assets(assets), _isGoodsVisible(false) {};
 		void loadFromFile(const std::string& filename);
 		unsigned int getTileWidth();
 		unsigned int getTileHeight();
@@ -20,6 +20,8 @@ namespace Archipelago {
 		const sf::Vector2f screenToMapCoords(sf::Vector2f screenCoords);
 		const sf::Vector2f getCenter();
 		Archipelago::Tile* getTileAt(int mapX, int mapY);
+		void setGoodsVisibility(bool v) { _isGoodsVisible = v; };
+		bool getGoodsVisibility() { return _isGoodsVisible; };
 		void draw(sf::RenderWindow& window);
 	private:
 		unsigned int _mapWidth;
@@ -27,6 +29,7 @@ namespace Archipelago {
 		unsigned int _tileWidth;
 		unsigned int _tileHeight;
 		std::vector<Archipelago::Tile> _tiles;
+		bool _isGoodsVisible;
 		AssetRegistry& _assets;
 	};
 
