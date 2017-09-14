@@ -8,6 +8,14 @@ Settlement building tile-based mini-game.
 * nlohmann JSON library (https://github.com/nlohmann/json)
 * spdlog (https://github.com/gabime/spdlog)
 
+# Build
+
+TBD
+
+# Assets
+
+Not included at the time.
+
 # Controls
 
 | Control          | Action                        |
