@@ -47,7 +47,7 @@ Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
 
 void AssetRegistry::prepareGoodsAtlas() {
 	spdlog::get(LOGGER_NAME)->trace("AssetRegistry::prepareGoodsAtlas started...");
-	std::string filename("assets/goods/goods_specification.json");
+	std::string filename("assets/goods_specification.json");
 	nlohmann::json goodsSpecJSON;
 	std::fstream goodsSpecFile;
 	goodsSpecFile.open(filename);

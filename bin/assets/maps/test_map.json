@@ -1,0 +1,35 @@
+{
+	"mapWidth": 10,
+	"mapHeight": 10,
+	"tileWidth": 128,
+	"tileHeight": 64,
+	"tileset": [
+		{ "id": 0, "tileName": "grass", "texFileName": "assets/textures/test_map/test_tile_red.png", "tileRising": 0 },
+		{ "id": 1, "tileName": "mushroom", "texFileName": "assets/textures/test_map/test_tile_tall.png", "tileRising": 20 },
+		{ "id": 2, "tileName": "crossroads", "texFileName": "assets/textures/test_map/test_tile_blue.png", "tileRising": 10 }
+	],
+	"terrain_layer": [
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+		0, 0, 1, 2, 0, 0, 0, 1, 0, 0,
+		0, 0, 0, 1, 2, 0, 1, 0, 0, 0,
+		0, 0, 0, 2, 1, 1, 0, 2, 2, 0,
+		0, 0, 0, 0, 1, 1, 0, 2, 2, 0,
+		0, 0, 0, 1, 0, 0, 1, 0, 0, 0,
+		0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 1
+	],
+	"goods_layer": [
+		257, 514, 771, 260, 517, 774, 263, 520, 777, 778,
+		779, 780, 781, 782, 783, 784, 785, 786, 787, 788,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0	
+	]
+}

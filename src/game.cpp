@@ -101,16 +101,16 @@ void Game::run() {
 				case sf::Keyboard::Escape:
 					_window->close();
 					break;
-				case sf::Keyboard::Left:
+				case sf::Keyboard::A:
 					_moveCamera(-static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
 					break;
-				case sf::Keyboard::Right:
+				case sf::Keyboard::D:
 					_moveCamera(static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
 					break;
-				case sf::Keyboard::Up:
+				case sf::Keyboard::W:
 					_moveCamera(0, -static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
 					break;
-				case sf::Keyboard::Down:
+				case sf::Keyboard::S:
 					_moveCamera(0, static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
 					break;
 				}

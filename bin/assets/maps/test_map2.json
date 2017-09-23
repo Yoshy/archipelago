@@ -1,0 +1,40 @@
+{
+	"mapWidth": 10,
+	"mapHeight": 10,
+	"tileWidth": 126,
+	"tileHeight": 74,
+	"tileset": [
+		{ "id": 0, "tileName": "grass", "tileRising": 1, "texFileName": "assets/textures/test_map2/tile_grass.png" },
+		{ "id": 1, "tileName": "crossroads", "tileRising": 1, "texFileName": "assets/textures/test_map2/tile_crossroads.png" },
+		{ "id": 2, "tileName": "house1", "tileRising": 0, "texFileName": "assets/textures/test_map2/tile_house.png", "texOffsetX": 0 },
+		{ "id": 3, "tileName": "house2", "tileRising": 10, "texFileName": "assets/textures/test_map2/tile_house.png", "texOffsetX": 0 },
+		{ "id": 4, "tileName": "house3", "tileRising": 20, "texFileName": "assets/textures/test_map2/tile_house.png", "texOffsetX": 0 },
+		{ "id": 5, "tileName": "house4", "tileRising": 34, "texFileName": "assets/textures/test_map2/tile_house.png", "texOffsetX": 0 },
+		{ "id": 6, "tileName": "house5", "tileRising": 54, "texFileName": "assets/textures/test_map2/tile_house.png", "texOffsetX": 0 },
+		{ "id": 7, "tileName": "house6", "tileRising": 34, "texFileName": "assets/textures/test_map2/tile_house2.png", "texOffsetX": 1 }
+	],
+	"terrain_layer": [
+		1, 0, 0, 0, 0, 0, 0, 0, 0, 7,
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 0,
+		0, 0, 1, 5, 0, 0, 0, 1, 6, 0,
+		0, 0, 0, 1, 7, 0, 1, 0, 5, 0,
+		0, 0, 0, 5, 1, 1, 0, 0, 4, 0,
+		0, 0, 0, 0, 1, 1, 0, 0, 3, 0,
+		0, 0, 0, 1, 0, 0, 1, 0, 2, 0,
+		0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+		0, 1, 0, 0, 0, 0, 0, 0, 1, 1,
+		1, 0, 0, 0, 0, 0, 0, 0, 1, 1
+	],
+	"goods_layer": [
+		257, 514, 771, 260, 517, 774, 263, 520, 777, 778,
+		779, 780, 781, 782, 783, 784, 785, 786, 787, 788,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0	
+	]
+}
