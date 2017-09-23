@@ -1,0 +1,14 @@
+[
+	{
+		"id": 1,
+		"name": "Base camp",
+		"description": "Base camp is "
+		"textures": [
+			"assets/textures/building_base_camp_1.png",
+		]
+		"provide_goods": [
+			{ "People": 5 },
+			{ "Fresh Water": 5 }
+		]
+	}
+]

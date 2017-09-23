@@ -22,6 +22,8 @@ Not included at the time.
 |------------------|-------------------------------|
 | WASD             | move camera                   |
 | SPACE            | show available goods on tiles |
+| Numpad ADD       | increase game speed           |
+| Numpad SUBSTRACT | decrease game speed           |
 | ESC              | quit game                     |
 | Mouse LMB        | show terrain info             |
 | Mouse RMB + drag | move camera                   |

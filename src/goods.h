@@ -7,7 +7,7 @@
 
 namespace Archipelago {
 
-	enum class GoodsTypeId { Unknown = 0, FreshWater = 1, SaltWater = 2, Crops = 3, Wood = 4 };
+	enum class GoodsTypeId { Unknown = 0, People = 1, FreshWater = 2, SaltWater = 3, Crops = 4, Wood = 5, _End, _Begin = People };
 
 	struct GoodsSpecification {
 		std::string name;

@@ -1,6 +1,7 @@
 [
-	{"id": 1, "name": "Fresh Water", "icon": "assets/textures/goods_freshwater_small.png"},
-	{"id": 2, "name": "Salt Water", "icon": "assets/textures/goods_saltwater_small.png"},
-	{"id": 3, "name": "Crops", "icon": "assets/textures/goods_crops_small.png"},
-	{"id": 4, "name": "Wood", "icon": "assets/textures/goods_wood_small.png"}
+	{ "id": 1, "name": "People", "icon": "assets/textures/goods_people_small.png" },
+	{ "id": 2, "name": "Fresh Water", "icon": "assets/textures/goods_freshwater_small.png" },
+	{ "id": 3, "name": "Salt Water", "icon": "assets/textures/goods_saltwater_small.png" },
+	{ "id": 4, "name": "Crops", "icon": "assets/textures/goods_crops_small.png" },
+	{ "id": 5, "name": "Wood", "icon": "assets/textures/goods_wood_small.png" }
 ]

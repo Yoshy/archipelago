@@ -18,7 +18,16 @@
 extern const char* GAME_NAME;
 
 #define STRING_RESERVATION_SIZE 100
-#define UI_MAIN_WINDOW_WIDTH 100.0f
+
+// Duration of game month in real time seconds
+#define GAME_MONTH_DURATION_NORMAL 30
+#define GAME_MONTH_DURATION_FAST 10
+#define GAME_MONTH_DURATION_SUPERFAST 1
+
+#define UI_STATUS_BAR_HEIGHT 35.0f
+#define UI_TSB_TIME_LABEL_ID "tsb_time_label"
+#define UI_BOTTOM_STATUS_BAR_LABEL_ID "bsb_label"
+#define UI_TSB_GOODS_LABEL "tsb_goods_label"
 
 #define UI_TERRAIN_INFO_WINDOW_WIDTH 200.0f
 #define UI_TERRAIN_INFO_WINDOW_HEIGHT 200.0f
@@ -36,8 +45,22 @@ namespace Archipelago {
 		void run();
 		void shutdown();
 	private:
-		Tile* _prevTile;
+		// game mechanic stuff
+		unsigned int _gameTime; // Months since game start
+		unsigned int _currentGameMonthDuration;
+		std::string _getCurrentGameTimeString(void);
+		std::vector<GoodsStack> _settlementGoods;
+		void _initSettlementGoods();
+		// UI stuff
+		sfg::Window::Ptr _uiTopStatusBar;
+		sfg::Window::Ptr _uiBottomStatusBar;
+		sfg::Window::Ptr _uiTerrainInfoWindow;
+		void _resizeUi(unsigned int width, unsigned int height);
+		void _showTerrainInfo();
+		void _onTerrainInfoWindowMouseEnter();
+		void _onTerrainInfoWindowMouseLeave();
 		// game internal stuff
+		Tile* _prevTile;
 		unsigned int _numThreads;
 		unsigned int _fps;
 		float _curCameraZoom;
@@ -50,14 +73,7 @@ namespace Archipelago {
 		void _moveCamera(float offsetX, float offsetY);
 		void _zoomCamera(float zoomFactor);
 		void _getMousePositionString(std::string& str);
-		// UI stuff
-		sfg::Window::Ptr _uiMainWindow;
-		sfg::Label::Ptr _uiStatusBar;
-		sfg::Window::Ptr _uiTerrainInfoWindow;
-		void _showTerrainInfo();
-		void _onTerrainInfoWindowMouseEnter();
-		void _onTerrainInfoWindowMouseLeave();
-		// game posessions
+		// game class posessions
 		std::shared_ptr<spdlog::logger> _logger;
 		std::unique_ptr<Archipelago::AssetRegistry> _assetRegistry;
 		std::unique_ptr<sf::RenderWindow> _window;
