@@ -2,13 +2,34 @@
 	{
 		"id": 1,
 		"name": "Base camp",
-		"description": "Base camp is "
-		"textures": [
+		"description": "Base camp is the first building. It gives some resources to begin development of your settlement. May be placed on any tile, except mountains",
+		"icon": [
 			"assets/textures/building_base_camp_1.png",
+		],
+		"cost": [
+		],
+		"occupation": -5,
+		"provides_goods": [
+			{ "Wood": 5 }
+		],
+		"production": [
 		]
-		"provide_goods": [
-			{ "People": 5 },
-			{ "Fresh Water": 5 }
+	},
+	{
+		"id": 2,
+		"name": "Woodcutter",
+		"description": "The Woodcutter produces 1 wood per month. Must be placed on a tile with wood",
+		"icon": [
+			"assets/textures/building_woodcutter_1.png",
+		],
+		"cost": [
+			{ "Wood": 5 }
+		],
+		"occupation": 1,
+		"provides_goods": [
+		],
+		"production": [
+			{ "Wood": 1 },
 		]
 	}
 ]

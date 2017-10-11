@@ -1,6 +1,5 @@
 #include "tile.h"
 #include <memory>
-#include "globals.h"
 #include "spdlog/spdlog.h"
 #include "asset_registry.h"
 

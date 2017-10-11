@@ -1,4 +1,3 @@
-#include "globals.h"
 #include <fstream>
 #include <thread>
 #include "game.h"
@@ -7,27 +6,31 @@
 #include <cmath>
 #include "json.hpp"
 
+namespace Archipelago {
+
+	// General game constants
+	const std::string& gameName{ "Archipelago" };
+	extern const std::string& loggerName{ gameName + "_logger" };
+	const std::string& defaultMapName{ "default_map" };
+	const size_t stringReservationSize{ 100 };
+	// UI constants
+	const float ui_MainInterfaceWindowWidth{ 200 };
+	const float ui_MainInterfaceWindowHeight{ 200 };
+	const float ui_StatusBarHeight{ 38 };
+	const std::string& ui_TopStatusBar_TimeLabelId{ "tsb_time_label" };
+	const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_goods_label" };
+	const std::string& ui_BottomStatusBar_LabelId{ "bsb_label" };
+	const float maxCameraZoom{ 3.0f };
+	const float minCameraZoom{ 0.2f };
+	// Time constants
+	const unsigned int gameMonthDurationNormal{ 30 };
+	const unsigned int gameMonthDurationFast{ 10 };
+	const unsigned int gameMonthDurationSuperFast{ 1 };
+
+}
+
 using namespace Archipelago;
 using namespace spdlog;
-// General game constants
-const std::string& gameName{ "Archipelago" };
-const std::string& loggerName{ gameName + "_logger" };
-const std::string& defaultMapName{ "default_map" };
-const size_t stringReservationSize{ 100 };
-// UI constants
-const float ui_TerrainInfoWindowWidth{ 200 };
-const float ui_TerrainInfoWindowHeight{ 200 };
-const float ui_StatusBarHeight{ 35 };
-const std::string& ui_TopStatusBar_TimeLabelId{ "tsb_time_label" };
-const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_goods_label" };
-const std::string& ui_BottomStatusBar_LabelId{ "bsb_label" };
-const float maxCameraZoom{ 3.0f };
-const float minCameraZoom{ 0.2f };
-// Time constants
-const unsigned int gameMonthDurationNormal{ 30 };
-const unsigned int gameMonthDurationFast{ 10 };
-const unsigned int gameMonthDurationSuperFast{ 1 };
-
 
 Game::Game(): _isFullscreen(true), _windowWidth(800), _windowHeight(600) {
 
@@ -118,7 +121,7 @@ void Game::run() {
 			_uiDesktop->HandleEvent(event);
 			switch (event.type) {
 			case sf::Event::Resized:
-				_resizeUi(event.size.width, event.size.height);
+				_resizeUi( static_cast<float>(event.size.width), static_cast<float>(event.size.height) );
 				break;
 			case sf::Event::KeyPressed:
 				switch (event.key.code) {
@@ -189,7 +192,7 @@ void Game::run() {
 					_isMovingCamera = false;
 				};
 				if (event.mouseButton.button == sf::Mouse::Left) {
-					_showTerrainInfo();
+					//_showTerrainInfo();
 				}
 				break;
 			}
@@ -294,15 +297,34 @@ void Game::_initGraphics() {
 	_uiBottomStatusBar->Add(_uiBottomStatusBarLabel);
 	_uiDesktop->Add(_uiBottomStatusBar);
 
-	_uiTerrainInfoWindow = sfg::Window::Create();
-	_uiTerrainInfoWindow->Show(false);
-	_uiTerrainInfoWindow->SetTitle("Terrain information");
-	_uiTerrainInfoWindow->SetStyle(sfg::Window::BACKGROUND | sfg::Window::TITLEBAR | sfg::Window::SHADOW);
-	_uiTerrainInfoWindow->SetRequisition(sf::Vector2f(ui_TerrainInfoWindowWidth, ui_TerrainInfoWindowHeight));
-	_uiTerrainInfoWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
-	_uiTerrainInfoWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
-	_uiDesktop->Add(_uiTerrainInfoWindow);
-	_resizeUi(_windowWidth, _windowHeight);
+	_uiMainInterfaceWindow = sfg::Window::Create();
+	_uiMainInterfaceWindow->Show(true);
+	_uiMainInterfaceWindow->SetStyle(sfg::Window::BACKGROUND);
+	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
+	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
+	auto mainNotebook = sfg::Notebook::Create();
+	auto buildBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 10.0f);
+
+	sf::Image buildingIconImg;
+	auto buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
+	buildBox->Pack(buildingBox, false);
+	if (buildingIconImg.loadFromFile("assets/textures/building_base_camp_1.png")) {
+		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
+		buildingBox->Pack(sfg::Label::Create("Base camp"), false);
+	}
+	buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
+	buildBox->Pack(buildingBox, false);
+	if (buildingIconImg.loadFromFile("assets/textures/building_woodcutter_1.png")) {
+		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
+		buildingBox->Pack(sfg::Label::Create("Woodcutter"), false);
+	}
+
+	auto infoBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
+	mainNotebook->AppendPage(buildBox, sfg::Label::Create("Build"));
+	mainNotebook->AppendPage(infoBox, sfg::Label::Create("Info"));
+	_uiMainInterfaceWindow->Add(mainNotebook);
+	_uiDesktop->Add(_uiMainInterfaceWindow);
+	_resizeUi(static_cast<float>(_windowWidth), static_cast<float>(_windowHeight));
 }
 
 void Game::_loadAssets() {
@@ -387,19 +409,23 @@ void Game::_getMousePositionString(std::string& str) {
 	str += "World X:" + std::to_string(mapCoords.x) + " Y: " + std::to_string(mapCoords.y) + "; ";
 }
 
-void Game::_resizeUi(unsigned int width, unsigned int height) {
-	_uiTopStatusBar->SetPosition(sf::Vector2f(0, 0));
-	_uiTopStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), ui_StatusBarHeight));
+void Game::_resizeUi(float width, float height) {
+	_uiTopStatusBar->SetAllocation( sf::FloatRect(0, 0, width, ui_StatusBarHeight) );
 	std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(ui_TopStatusBar_TimeLabelId))->SetAlignment(sf::Vector2f(1.0f, 0.0f));
 
-	_uiBottomStatusBar->SetPosition(sf::Vector2f(0, static_cast<float>(height) - ui_StatusBarHeight));
-	_uiBottomStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), ui_StatusBarHeight));
+	_uiBottomStatusBar->SetAllocation( sf::FloatRect(0, height - ui_StatusBarHeight, width, ui_StatusBarHeight) );
 	std::dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(ui_BottomStatusBar_LabelId))->SetAlignment(sf::Vector2f(0.0f, 0.0f));
+
+	_uiMainInterfaceWindow->SetAllocation( sf::FloatRect(0, ui_StatusBarHeight, 0/*ui_MainInterfaceWindowWidth*/, height - 2.0f * ui_StatusBarHeight) );
+
+	sf::View v = _window->getView();
+	v.setSize(width, height);
+	_window->setView(v);
 }
 
 void Game::_showTerrainInfo() {
-	if (_uiTerrainInfoWindow->GetState() == sfg::Window::State::PRELIGHT) {
-		_uiTerrainInfoWindow->Show(false);
+	if (_uiMainInterfaceWindow->GetState() == sfg::Window::State::PRELIGHT) {
+		_uiMainInterfaceWindow->Show(false);
 		return;
 	}
 	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
@@ -408,18 +434,10 @@ void Game::_showTerrainInfo() {
 	Tile* tile = map.getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
 	if (tile) {
 		sf::Vector2i windowOrigin = _window->mapCoordsToPixel(tile->getSprite().getPosition());
-		_uiTerrainInfoWindow->SetPosition(sf::Vector2f(windowOrigin.x + static_cast<float>(map.getTileWidth()), windowOrigin.y + static_cast<float>(map.getTileHeight())));
-		_uiTerrainInfoWindow->Show(true);
+		_uiMainInterfaceWindow->SetPosition(sf::Vector2f(windowOrigin.x + static_cast<float>(map.getTileWidth()), windowOrigin.y + static_cast<float>(map.getTileHeight())));
+		_uiMainInterfaceWindow->Show(true);
 	}
 	else {
-		_uiTerrainInfoWindow->Show(false);
+		_uiMainInterfaceWindow->Show(false);
 	}
-}
-
-void Game::_onTerrainInfoWindowMouseEnter() {
-	_uiTerrainInfoWindow->SetState(sfg::Window::State::PRELIGHT);
-}
-
-void Game::_onTerrainInfoWindowMouseLeave() {
-	_uiTerrainInfoWindow->SetState(sfg::Window::State::NORMAL);
 }

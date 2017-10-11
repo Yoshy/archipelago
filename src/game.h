@@ -1,10 +1,3 @@
-/*
-
-Основной класс игры, точка входа.
-Загружает, конфигурирует и инициализирует основные компоненты
-
-*/
-
 #ifndef GAME_H
 #define GAME_H
 
@@ -17,8 +10,12 @@
 
 namespace Archipelago {	
 
+	extern const std::string& loggerName;
 	class AssetRegistry;
 
+	/** Main game class, entry point.
+	* Loads, configures and initialises all the components
+	*/
 	class Game {
 	public:
 		Game();
@@ -37,11 +34,9 @@ namespace Archipelago {
 		// UI stuff
 		sfg::Window::Ptr _uiTopStatusBar;
 		sfg::Window::Ptr _uiBottomStatusBar;
-		sfg::Window::Ptr _uiTerrainInfoWindow;
-		void _resizeUi(unsigned int width, unsigned int height);
+		sfg::Window::Ptr _uiMainInterfaceWindow;
+		void _resizeUi(float width, float height);
 		void _showTerrainInfo();
-		void _onTerrainInfoWindowMouseEnter();
-		void _onTerrainInfoWindowMouseLeave();
 		// game internal stuff
 		std::string _curMapName;
 		Tile* _prevTile;

@@ -1,6 +1,5 @@
 #include <fstream>
 #include <map>
-#include "globals.h"
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 #include "map.h"
@@ -8,8 +7,6 @@
 
 using namespace Archipelago;
 using namespace nlohmann;
-
-extern const std::string& loggerName;
 
 void Map::loadFromFile(const std::string& filename) {
 	auto logger = spdlog::get(loggerName);

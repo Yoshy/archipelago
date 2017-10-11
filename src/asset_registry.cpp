@@ -1,12 +1,10 @@
 #include <fstream>
 #include "asset_registry.h"
 #include "game.h"
-#include "globals.h"
 #include "spdlog/spdlog.h"
 #include "json.hpp"
 
 using namespace Archipelago;
-extern const std::string& loggerName;
 
 void AssetRegistry::loadTexture(const std::string& assetName, const std::string& filename) {
 	sf::Texture texture;

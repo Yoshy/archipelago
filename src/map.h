@@ -6,6 +6,7 @@
 
 namespace Archipelago {
 
+	extern const std::string& loggerName;
 	class AssetRegistry;
 
 	class Map {
