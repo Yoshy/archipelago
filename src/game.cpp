@@ -8,10 +8,26 @@
 #include "json.hpp"
 
 using namespace Archipelago;
-using namespace std;
 using namespace spdlog;
+// General game constants
+const std::string& gameName{ "Archipelago" };
+const std::string& loggerName{ gameName + "_logger" };
+const std::string& defaultMapName{ "default_map" };
+const size_t stringReservationSize{ 100 };
+// UI constants
+const float ui_TerrainInfoWindowWidth{ 200 };
+const float ui_TerrainInfoWindowHeight{ 200 };
+const float ui_StatusBarHeight{ 35 };
+const std::string& ui_TopStatusBar_TimeLabelId{ "tsb_time_label" };
+const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_goods_label" };
+const std::string& ui_BottomStatusBar_LabelId{ "bsb_label" };
+const float maxCameraZoom{ 3.0f };
+const float minCameraZoom{ 0.2f };
+// Time constants
+const unsigned int gameMonthDurationNormal{ 30 };
+const unsigned int gameMonthDurationFast{ 10 };
+const unsigned int gameMonthDurationSuperFast{ 1 };
 
-const char* GAME_NAME = "Archipelago";
 
 Game::Game(): _isFullscreen(true), _windowWidth(800), _windowHeight(600) {
 
@@ -23,13 +39,13 @@ Game::~Game() {
 
 void Game::init() {
 	// Init logger
-	_logger = basic_logger_mt(LOGGER_NAME, "archipelago.log");
+	_logger = basic_logger_mt(loggerName, "archipelago.log");
 	_logger->set_level(level::trace);
-	_logger->info("** {} starting **", GAME_NAME);
+	_logger->info("** {} starting **", gameName);
 
 	// Load, parse and apply configuration settings
-	fstream configFile;
-	string configString;
+	std::fstream configFile;
+	std::string configString;
 
 	nlohmann::json configJSON;
 	configFile.open("config.json");
@@ -50,7 +66,7 @@ void Game::init() {
 	catch (std::out_of_range& e) {
 		_logger->trace("No 'logging'.'level' option found in configuration file, default log level is 0 (trace). Error: {}", e.what());
 	}
-	_logger->trace("Logging level set to " + to_string(logLevel));
+	_logger->trace("Logging level set to " + std::to_string(logLevel));
 	_logger->set_level(static_cast<level::level_enum>(logLevel));
 
 	try {
@@ -73,11 +89,12 @@ void Game::init() {
 	_logger->info("Host has {} cores", _numThreads);
 
 	// Init game subsystems
+	_curMapName = defaultMapName;
 	_loadAssets();
 	_initSettlementGoods();
 	_initGraphics();
 	_gameTime = 0;
-	_currentGameMonthDuration = GAME_MONTH_DURATION_NORMAL;
+	_currentGameMonthDuration = gameMonthDurationNormal;
 }
 
 void Game::shutdown() {
@@ -91,8 +108,8 @@ void Game::run() {
 	std::string mousePositionString;
 	std::string statusString;
 
-	mousePositionString.reserve(STRING_RESERVATION_SIZE);
-	statusString.reserve(STRING_RESERVATION_SIZE);
+	mousePositionString.reserve(stringReservationSize);
+	statusString.reserve(stringReservationSize);
 	accumulatedTime = sf::Time::Zero;
 	while (_window->isOpen()) {
 		// Events processing
@@ -109,34 +126,34 @@ void Game::run() {
 					_window->close();
 					break;
 				case sf::Keyboard::A:
-					_moveCamera(-static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
+					_moveCamera(-static_cast<float>(_assetRegistry->getMap(_curMapName).getTileWidth()), 0);
 					break;
 				case sf::Keyboard::D:
-					_moveCamera(static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileWidth()), 0);
+					_moveCamera(static_cast<float>(_assetRegistry->getMap(_curMapName).getTileWidth()), 0);
 					break;
 				case sf::Keyboard::W:
-					_moveCamera(0, -static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
+					_moveCamera(0, -static_cast<float>(_assetRegistry->getMap(_curMapName).getTileHeight()));
 					break;
 				case sf::Keyboard::S:
-					_moveCamera(0, static_cast<float>(_assetRegistry->getMap(MAP_NAME).getTileHeight()));
+					_moveCamera(0, static_cast<float>(_assetRegistry->getMap(_curMapName).getTileHeight()));
 					break;
 				case sf::Keyboard::Add:
 					switch (_currentGameMonthDuration) {
-					case GAME_MONTH_DURATION_NORMAL:
-						_currentGameMonthDuration = GAME_MONTH_DURATION_FAST;
+					case gameMonthDurationNormal:
+						_currentGameMonthDuration = gameMonthDurationFast;
 						break;
-					case GAME_MONTH_DURATION_FAST:
-						_currentGameMonthDuration = GAME_MONTH_DURATION_SUPERFAST;
+					case gameMonthDurationFast:
+						_currentGameMonthDuration = gameMonthDurationSuperFast;
 						break;
 					}
 					break;
 				case sf::Keyboard::Subtract:
 					switch (_currentGameMonthDuration) {
-					case GAME_MONTH_DURATION_SUPERFAST:
-						_currentGameMonthDuration = GAME_MONTH_DURATION_FAST;
+					case gameMonthDurationSuperFast:
+						_currentGameMonthDuration = gameMonthDurationFast;
 						break;
-					case GAME_MONTH_DURATION_FAST:
-						_currentGameMonthDuration = GAME_MONTH_DURATION_NORMAL;
+					case gameMonthDurationFast:
+						_currentGameMonthDuration = gameMonthDurationNormal;
 						break;
 					}
 					break;
@@ -180,10 +197,10 @@ void Game::run() {
 
 		// Keyboard state processing
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-			_assetRegistry->getMap(MAP_NAME).setGoodsVisibility(true);
+			_assetRegistry->getMap(_curMapName).setGoodsVisibility(true);
 		}
 		else {
-			_assetRegistry->getMap(MAP_NAME).setGoodsVisibility(false);
+			_assetRegistry->getMap(_curMapName).setGoodsVisibility(false);
 		}
 
 		// Status string composition
@@ -198,18 +215,18 @@ void Game::run() {
 		_fps = static_cast<int>(1.0f / frameTime.asSeconds());
 		statusString = mousePositionString;
 		statusString += " FPS: ";
-		statusString += to_string(_fps);
-		dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(UI_BOTTOM_STATUS_BAR_LABEL_ID))->SetText(statusString);
+		statusString += std::to_string(_fps);
+		std::dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(ui_BottomStatusBar_LabelId))->SetText(statusString);
 
-		dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(UI_TSB_TIME_LABEL_ID))->SetText(_getCurrentGameTimeString());
+		std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(ui_TopStatusBar_TimeLabelId))->SetText(_getCurrentGameTimeString());
 		for (unsigned int i = 0; i < _settlementGoods.size(); i++) {
-			auto s = std::string(UI_TSB_GOODS_LABEL) + std::to_string(i);
-			dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(s))->SetText(std::to_string(_settlementGoods[i].amount));
+			auto s = ui_TopStatusBar_GoodsLabelId + std::to_string(i);
+			std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(s))->SetText(std::to_string(_settlementGoods[i].amount));
 		};
 
 		sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-		sf::Vector2f mapCoords = _assetRegistry->getMap(MAP_NAME).screenToMapCoords(screenCoords);
-		Tile* tile = _assetRegistry->getMap(MAP_NAME).getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
+		sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
+		Tile* tile = _assetRegistry->getMap(_curMapName).getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
 		if (tile) {
 			if (_prevTile) {
 				_prevTile->getSprite().setColor(sf::Color::White);
@@ -233,25 +250,25 @@ void Game::_initGraphics() {
 		videoMode = videoMode.getDesktopMode();
 		windowStyle = sf::Style::Fullscreen;
 	};
-	_window = make_unique<sf::RenderWindow>(videoMode, GAME_NAME, windowStyle);
+	_window = std::make_unique<sf::RenderWindow>(videoMode, gameName, windowStyle);
 	_window->setVerticalSyncEnabled(_enable_vsync);
 
 	// Init viewport
 	sf::View v = _window->getView();
-	v.setCenter(_assetRegistry->getMap(MAP_NAME).getCenter());
+	v.setCenter(_assetRegistry->getMap(_curMapName).getCenter());
 	_window->setView(v);
 	_window->setMouseCursorVisible(true);
 	_isMovingCamera = false;
 	_curCameraZoom = 1.0f;
 
 	// Init UI
-	_sfgui = make_unique<sfg::SFGUI>();
-	_uiDesktop = make_unique<sfg::Desktop>();
+	_sfgui = std::make_unique<sfg::SFGUI>();
+	_uiDesktop = std::make_unique<sfg::Desktop>();
 
 	_uiTopStatusBar = sfg::Window::Create();
 	_uiTopStatusBar->SetStyle(sfg::Window::BACKGROUND);
 	auto currentGameTimeLabel = sfg::Label::Create();
-	currentGameTimeLabel->SetId(UI_TSB_TIME_LABEL_ID);
+	currentGameTimeLabel->SetId(ui_TopStatusBar_TimeLabelId);
 	_uiDesktop->Add(_uiTopStatusBar);
 	auto mainBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
 	auto goodsBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
@@ -261,7 +278,7 @@ void Game::_initGraphics() {
 		auto goodsAmountText = sfg::Label::Create(std::to_string(_settlementGoods[i].amount));
 		auto spacer = sfg::Label::Create("  ");
 		goodsAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
-		goodsAmountText->SetId(std::string(UI_TSB_GOODS_LABEL) + std::to_string(i));
+		goodsAmountText->SetId(ui_TopStatusBar_GoodsLabelId + std::to_string(i));
 		goodsBox->Pack(goodsIcon, false, true);
 		goodsBox->Pack(goodsAmountText, false, true);
 		goodsBox->Pack(spacer, false, true);
@@ -273,7 +290,7 @@ void Game::_initGraphics() {
 	_uiBottomStatusBar = sfg::Window::Create();
 	_uiBottomStatusBar->SetStyle(sfg::Window::BACKGROUND);
 	auto _uiBottomStatusBarLabel = sfg::Label::Create();
-	_uiBottomStatusBarLabel->SetId(UI_BOTTOM_STATUS_BAR_LABEL_ID);
+	_uiBottomStatusBarLabel->SetId(ui_BottomStatusBar_LabelId);
 	_uiBottomStatusBar->Add(_uiBottomStatusBarLabel);
 	_uiDesktop->Add(_uiBottomStatusBar);
 
@@ -281,7 +298,7 @@ void Game::_initGraphics() {
 	_uiTerrainInfoWindow->Show(false);
 	_uiTerrainInfoWindow->SetTitle("Terrain information");
 	_uiTerrainInfoWindow->SetStyle(sfg::Window::BACKGROUND | sfg::Window::TITLEBAR | sfg::Window::SHADOW);
-	_uiTerrainInfoWindow->SetRequisition(sf::Vector2f(UI_TERRAIN_INFO_WINDOW_WIDTH, UI_TERRAIN_INFO_WINDOW_HEIGHT));
+	_uiTerrainInfoWindow->SetRequisition(sf::Vector2f(ui_TerrainInfoWindowWidth, ui_TerrainInfoWindowHeight));
 	_uiTerrainInfoWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
 	_uiTerrainInfoWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
 	_uiDesktop->Add(_uiTerrainInfoWindow);
@@ -290,11 +307,11 @@ void Game::_initGraphics() {
 
 void Game::_loadAssets() {
 	if (!_assetRegistry) {
-		_assetRegistry = make_unique<Archipelago::AssetRegistry>();
+		_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
 	}
 	_assetRegistry->prepareGoodsAtlas();
 	// map must be loaded last, because it needs other assets, such as goods
-	_assetRegistry->loadMap(MAP_NAME, "assets/maps/" MAP_NAME ".json");
+	_assetRegistry->loadMap(_curMapName, "assets/maps/" + _curMapName + ".json");
 	_prevTile = nullptr;
 }
 
@@ -307,13 +324,13 @@ std::string Game::_getCurrentGameTimeString() {
 	timeString += ", Month ";
 	timeString += std::to_string(month);
 	switch (_currentGameMonthDuration) {
-	case GAME_MONTH_DURATION_NORMAL:
+	case gameMonthDurationNormal:
 		timeString += " (going normal)";
 		break;
-	case GAME_MONTH_DURATION_FAST:
+	case gameMonthDurationFast:
 		timeString += " (going fast)";
 		break;
-	case GAME_MONTH_DURATION_SUPERFAST:
+	case gameMonthDurationSuperFast:
 		timeString += " (going superfast)";
 		break;
 	}
@@ -333,7 +350,7 @@ void Game::_draw() {
 	_window->clear();
 
 	// Render world
-	_assetRegistry->getMap(MAP_NAME).draw(*_window);
+	_assetRegistry->getMap(_curMapName).draw(*_window);
 
 	// Display everything
 	_sfgui->Display(*_window);
@@ -345,8 +362,8 @@ void Game::_moveCamera(float offsetX, float offsetY) {
 	sf::Vector2f viewCenter = v.getCenter();
 	viewCenter.x = viewCenter.x + offsetX;
 	viewCenter.y = viewCenter.y + offsetY;
-	sf::Vector2f mapCoords = _assetRegistry->getMap(MAP_NAME).screenToMapCoords(viewCenter);
-	if (mapCoords.x < 0 || mapCoords.y < 0 || mapCoords.x > _assetRegistry->getMap(MAP_NAME).getMapWidth() || mapCoords.y > _assetRegistry->getMap(MAP_NAME).getMapHeight()) {
+	sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(viewCenter);
+	if (mapCoords.x < 0 || mapCoords.y < 0 || mapCoords.x > _assetRegistry->getMap(_curMapName).getMapWidth() || mapCoords.y > _assetRegistry->getMap(_curMapName).getMapHeight()) {
 		return;
 	}
 	v.move(offsetX, offsetY);
@@ -354,7 +371,7 @@ void Game::_moveCamera(float offsetX, float offsetY) {
 }
 
 void Game::_zoomCamera(float zoomFactor) {
-	if (_curCameraZoom * zoomFactor > MAX_CAMERA_ZOOM || _curCameraZoom * zoomFactor < MIN_CAMERA_ZOOM) {
+	if (_curCameraZoom * zoomFactor > maxCameraZoom || _curCameraZoom * zoomFactor < minCameraZoom) {
 		return;
 	}
 	sf::View v = _window->getView();
@@ -365,19 +382,19 @@ void Game::_zoomCamera(float zoomFactor) {
 
 void Game::_getMousePositionString(std::string& str) {
 	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	sf::Vector2f mapCoords = _assetRegistry->getMap(MAP_NAME).screenToMapCoords(screenCoords);
+	sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
 	str = "Screen X: " + std::to_string(screenCoords.x) + " Y: " + std::to_string(screenCoords.y) + "; ";
 	str += "World X:" + std::to_string(mapCoords.x) + " Y: " + std::to_string(mapCoords.y) + "; ";
 }
 
 void Game::_resizeUi(unsigned int width, unsigned int height) {
 	_uiTopStatusBar->SetPosition(sf::Vector2f(0, 0));
-	_uiTopStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), UI_STATUS_BAR_HEIGHT));
-	dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(UI_TSB_TIME_LABEL_ID))->SetAlignment(sf::Vector2f(1.0f, 0.0f));
+	_uiTopStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), ui_StatusBarHeight));
+	std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(ui_TopStatusBar_TimeLabelId))->SetAlignment(sf::Vector2f(1.0f, 0.0f));
 
-	_uiBottomStatusBar->SetPosition(sf::Vector2f(0, static_cast<float>(height) - UI_STATUS_BAR_HEIGHT));
-	_uiBottomStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), UI_STATUS_BAR_HEIGHT));
-	dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(UI_BOTTOM_STATUS_BAR_LABEL_ID))->SetAlignment(sf::Vector2f(0.0f, 0.0f));
+	_uiBottomStatusBar->SetPosition(sf::Vector2f(0, static_cast<float>(height) - ui_StatusBarHeight));
+	_uiBottomStatusBar->SetRequisition(sf::Vector2f(static_cast<float>(width), ui_StatusBarHeight));
+	std::dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(ui_BottomStatusBar_LabelId))->SetAlignment(sf::Vector2f(0.0f, 0.0f));
 }
 
 void Game::_showTerrainInfo() {
@@ -386,7 +403,7 @@ void Game::_showTerrainInfo() {
 		return;
 	}
 	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	Archipelago::Map& map = _assetRegistry->getMap(MAP_NAME);
+	Archipelago::Map& map = _assetRegistry->getMap(_curMapName);
 	sf::Vector2f mapCoords = map.screenToMapCoords(screenCoords);
 	Tile* tile = map.getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
 	if (tile) {

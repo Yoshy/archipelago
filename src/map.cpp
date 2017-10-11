@@ -7,15 +7,16 @@
 #include "asset_registry.h"
 
 using namespace Archipelago;
-using namespace std;
 using namespace nlohmann;
 
+extern const std::string& loggerName;
+
 void Map::loadFromFile(const std::string& filename) {
-	auto logger = spdlog::get(LOGGER_NAME);
+	auto logger = spdlog::get(loggerName);
 
 	logger->debug("Loading map '{}'", filename);
 	json mapJSON;
-	fstream mapFile;
+	std::fstream mapFile;
 	mapFile.open(filename);
 	if (mapFile.fail()) {
 		logger->debug("Map::loadFromFile failed. Error opening map file '{}'", filename);
@@ -132,7 +133,7 @@ const sf::Vector2f Map::getCenter() {
 }
 
 Archipelago::Tile* Map::getTileAt(int mapX, int mapY) {
-	auto logger = spdlog::get(LOGGER_NAME);
+	auto logger = spdlog::get(loggerName);
 	int tileIdx = mapY * _mapWidth + mapX;
 	if (mapX < 0 || mapX >= static_cast<int>(_mapWidth) || mapY < 0 || mapY >= static_cast<int>(_mapHeight)) {
 		return nullptr;

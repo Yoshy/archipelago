@@ -15,24 +15,7 @@
 #include <SFGUI/Widgets.hpp>
 #include "map.h"
 
-extern const char* GAME_NAME;
-
-#define STRING_RESERVATION_SIZE 100
-
-// Duration of game month in real time seconds
-#define GAME_MONTH_DURATION_NORMAL 30
-#define GAME_MONTH_DURATION_FAST 10
-#define GAME_MONTH_DURATION_SUPERFAST 1
-
-#define UI_STATUS_BAR_HEIGHT 35.0f
-#define UI_TSB_TIME_LABEL_ID "tsb_time_label"
-#define UI_BOTTOM_STATUS_BAR_LABEL_ID "bsb_label"
-#define UI_TSB_GOODS_LABEL "tsb_goods_label"
-
-#define UI_TERRAIN_INFO_WINDOW_WIDTH 200.0f
-#define UI_TERRAIN_INFO_WINDOW_HEIGHT 200.0f
-
-namespace Archipelago {
+namespace Archipelago {	
 
 	class AssetRegistry;
 
@@ -60,6 +43,7 @@ namespace Archipelago {
 		void _onTerrainInfoWindowMouseEnter();
 		void _onTerrainInfoWindowMouseLeave();
 		// game internal stuff
+		std::string _curMapName;
 		Tile* _prevTile;
 		unsigned int _numThreads;
 		unsigned int _fps;
