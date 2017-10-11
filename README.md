@@ -14,7 +14,9 @@ TBD
 
 # Assets
 
-Not included at the time.
+Assets in 'bin/assets' directory are for testing purposes only.
+
+They were found within the boundlessness of the Internet and some of them may have licensing issues. They will be removed upon request.
 
 # Controls
 
