@@ -3,7 +3,7 @@
 
 #include "SFML/Graphics.hpp"
 #include <string>
-#include "goods.h"
+#include "wares.h"
 
 namespace Archipelago {
 
@@ -20,14 +20,14 @@ namespace Archipelago {
 		sf::Sprite& getSprite();
 		void setSpritePosition(float x, float y);
 		void setSpritePosition(sf::Vector2f pos);
-		void addGoods(GoodsTypeId type, int amount);
-		const std::vector<GoodsStack>& getGoodsStackList() { return _goodsStackList; };
+		void addWares(WaresTypeId type, int amount);
+		const std::vector<WaresStack>& getWaresStackList() { return _waresStackList; };
 	private:
 		std::string _name;
 		unsigned int _rising;
 		AssetRegistry& _assets;
 		sf::Sprite _terrain_sprite;
-		std::vector<GoodsStack> _goodsStackList;
+		std::vector<WaresStack> _waresStackList;
 	};
 
 }

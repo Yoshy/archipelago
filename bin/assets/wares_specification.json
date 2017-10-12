@@ -1,0 +1,7 @@
+[
+	{ "id": 1, "name": "People", "icon": "assets/textures/wares_people_small.png" },
+	{ "id": 2, "name": "Fresh Water", "icon": "assets/textures/wares_freshwater_small.png" },
+	{ "id": 3, "name": "Salt Water", "icon": "assets/textures/wares_saltwater_small.png" },
+	{ "id": 4, "name": "Crops", "icon": "assets/textures/wares_crops_small.png" },
+	{ "id": 5, "name": "Wood", "icon": "assets/textures/wares_wood_small.png" }
+]

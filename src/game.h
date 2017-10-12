@@ -29,7 +29,7 @@ namespace Archipelago {
 		unsigned int _gameTime; // Months since game start
 		unsigned int _currentGameMonthDuration;
 		std::string _getCurrentGameTimeString(void);
-		std::vector<GoodsStack> _settlementGoods;
+		std::vector<WaresStack> _settlementGoods;
 		void _initSettlementGoods();
 		// UI stuff
 		sfg::Window::Ptr _uiTopStatusBar;

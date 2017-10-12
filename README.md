@@ -20,13 +20,13 @@ They were found within the boundlessness of the Internet and some of them may ha
 
 # Controls
 
-| Control          | Action                        |
-|------------------|-------------------------------|
-| WASD             | move camera                   |
-| SPACE            | show available goods on tiles |
-| Numpad ADD       | increase game speed           |
-| Numpad SUBSTRACT | decrease game speed           |
-| ESC              | quit game                     |
-| Mouse LMB        | show terrain info             |
-| Mouse RMB + drag | move camera                   |
-| Mouse wheel      | zoom                          |
+| Control          | Action                            |
+|------------------|-----------------------------------|
+| WASD             | move camera                       |
+| SPACE            | show available resources on tiles |
+| Numpad ADD       | increase game speed               |
+| Numpad SUBSTRACT | decrease game speed               |
+| ESC              | quit game                         |
+| Mouse LMB        | show terrain info                 |
+| Mouse RMB + drag | move camera                       |
+| Mouse wheel      | zoom                              |

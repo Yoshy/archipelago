@@ -7,15 +7,15 @@
 
 namespace Archipelago {
 
-	enum class GoodsTypeId { Unknown = 0, People = 1, FreshWater = 2, SaltWater = 3, Crops = 4, Wood = 5, _End, _Begin = People };
+	enum class WaresTypeId { Unknown = 0, People = 1, FreshWater = 2, SaltWater = 3, Crops = 4, Wood = 5, _End, _Begin = People };
 
-	struct GoodsSpecification {
+	struct WaresSpecification {
 		std::string name;
 		sf::Texture* icon;
 	};
 
-	struct GoodsStack {
-		GoodsTypeId type;
+	struct WaresStack {
+		WaresTypeId type;
 		int amount;
 	};
 

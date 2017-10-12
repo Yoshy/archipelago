@@ -5,15 +5,15 @@
 #include <map>
 #include <SFML/Graphics.hpp>
 #include "map.h"
-#include "goods.h"
+#include "wares.h"
 
 namespace Archipelago {
 
 	typedef std::map<std::string, sf::Texture> texture_atlas_t;
 	typedef std::map<std::string, Archipelago::Map> map_atlas_t;
-	typedef std::map<GoodsTypeId, Archipelago::GoodsSpecification> goods_atlas_t;
+	typedef std::map<WaresTypeId, Archipelago::WaresSpecification> wares_atlas_t;
 
-	enum class AssetType { Texture, Map, Resource };
+	enum class AssetType { Texture, Map, Ware };
 
 	class AssetRegistry {
 	public:
@@ -21,13 +21,13 @@ namespace Archipelago {
 		void loadMap(const std::string& assetName, const std::string& filename);
 		sf::Texture* getTexture(const std::string& textureName);
 		Archipelago::Map& getMap(const std::string& mapName);
-		void prepareGoodsAtlas();
-		const std::string& getGoodsName(GoodsTypeId type) { return _goodsAtlas.at(type).name; };
-		const GoodsSpecification& getGoodsSpecification(GoodsTypeId type) { return _goodsAtlas.at(type); }
+		void prepareWaresAtlas();
+		const std::string& getWaresName(WaresTypeId type) { return _waresAtlas.at(type).name; };
+		const WaresSpecification& getWaresSpecification(WaresTypeId type) { return _waresAtlas.at(type); }
 	private:
 		texture_atlas_t _textureAtlas;
 		map_atlas_t _mapAtlas;
-		goods_atlas_t _goodsAtlas; 
+		wares_atlas_t _waresAtlas; 
 	};
 }
 

@@ -18,7 +18,7 @@ namespace Archipelago {
 	const float ui_MainInterfaceWindowHeight{ 200 };
 	const float ui_StatusBarHeight{ 38 };
 	const std::string& ui_TopStatusBar_TimeLabelId{ "tsb_time_label" };
-	const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_goods_label" };
+	const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_wares_label" };
 	const std::string& ui_BottomStatusBar_LabelId{ "bsb_label" };
 	const float maxCameraZoom{ 3.0f };
 	const float minCameraZoom{ 0.2f };
@@ -200,10 +200,10 @@ void Game::run() {
 
 		// Keyboard state processing
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-			_assetRegistry->getMap(_curMapName).setGoodsVisibility(true);
+			_assetRegistry->getMap(_curMapName).setWaresVisibility(true);
 		}
 		else {
-			_assetRegistry->getMap(_curMapName).setGoodsVisibility(false);
+			_assetRegistry->getMap(_curMapName).setWaresVisibility(false);
 		}
 
 		// Status string composition
@@ -274,19 +274,19 @@ void Game::_initGraphics() {
 	currentGameTimeLabel->SetId(ui_TopStatusBar_TimeLabelId);
 	_uiDesktop->Add(_uiTopStatusBar);
 	auto mainBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
-	auto goodsBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
-	goodsBox->SetSpacing(10.0f);
+	auto waresBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
+	waresBox->SetSpacing(10.0f);
 	for (unsigned int i = 0; i < _settlementGoods.size(); i++) {
-		auto goodsIcon = sfg::Image::Create(_assetRegistry->getGoodsSpecification(_settlementGoods[i].type).icon->copyToImage()); // Удаляем гланды через ж? Да.
-		auto goodsAmountText = sfg::Label::Create(std::to_string(_settlementGoods[i].amount));
+		auto waresIcon = sfg::Image::Create(_assetRegistry->getWaresSpecification(_settlementGoods[i].type).icon->copyToImage()); // Удаляем гланды через ж? Да.
+		auto waresAmountText = sfg::Label::Create(std::to_string(_settlementGoods[i].amount));
 		auto spacer = sfg::Label::Create("  ");
-		goodsAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
-		goodsAmountText->SetId(ui_TopStatusBar_GoodsLabelId + std::to_string(i));
-		goodsBox->Pack(goodsIcon, false, true);
-		goodsBox->Pack(goodsAmountText, false, true);
-		goodsBox->Pack(spacer, false, true);
+		waresAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
+		waresAmountText->SetId(ui_TopStatusBar_GoodsLabelId + std::to_string(i));
+		waresBox->Pack(waresIcon, false, true);
+		waresBox->Pack(waresAmountText, false, true);
+		waresBox->Pack(spacer, false, true);
 	}
-	mainBox->Pack(goodsBox);
+	mainBox->Pack(waresBox);
 	mainBox->Pack(currentGameTimeLabel);
 	_uiTopStatusBar->Add(mainBox);
 
@@ -331,8 +331,8 @@ void Game::_loadAssets() {
 	if (!_assetRegistry) {
 		_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
 	}
-	_assetRegistry->prepareGoodsAtlas();
-	// map must be loaded last, because it needs other assets, such as goods
+	_assetRegistry->prepareWaresAtlas();
+	// map must be loaded last, because it needs other assets, such as wares
 	_assetRegistry->loadMap(_curMapName, "assets/maps/" + _curMapName + ".json");
 	_prevTile = nullptr;
 }
@@ -360,8 +360,8 @@ std::string Game::_getCurrentGameTimeString() {
 }
 
 void Game::_initSettlementGoods() {
-	for (GoodsTypeId gti = GoodsTypeId::_Begin; gti != GoodsTypeId::_End; gti = static_cast<GoodsTypeId>(std::underlying_type<GoodsTypeId>::type(gti) + 1)) {
-		GoodsStack stack;
+	for (WaresTypeId gti = WaresTypeId::_Begin; gti != WaresTypeId::_End; gti = static_cast<WaresTypeId>(std::underlying_type<WaresTypeId>::type(gti) + 1)) {
+		WaresStack stack;
 		stack.type = gti;
 		stack.amount = 0;
 		_settlementGoods.push_back(std::move(stack));

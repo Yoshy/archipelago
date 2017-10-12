@@ -24,7 +24,7 @@ void Map::loadFromFile(const std::string& filename) {
 
 	unsigned int map_size = 0;
 	std::vector<unsigned int> terrain_layer;
-	std::vector<unsigned int> goods_layer;
+	std::vector<unsigned int> wares_layer;
 	try {
 		_mapWidth = mapJSON.at("mapWidth");
 		_mapHeight = mapJSON.at("mapHeight");
@@ -32,7 +32,7 @@ void Map::loadFromFile(const std::string& filename) {
 		_tileHeight = mapJSON.at("tileHeight");
 		map_size = _mapWidth * _mapHeight;
 		terrain_layer = std::move(mapJSON.at("terrain_layer").get<std::vector<unsigned int>>());
-		goods_layer = std::move(mapJSON.at("goods_layer").get<std::vector<unsigned int>>());
+		wares_layer = std::move(mapJSON.at("wares_layer").get<std::vector<unsigned int>>());
 		if (terrain_layer.size() != map_size) {
 			logger->debug("terrain_layer size ({}) is not equal to width*height ({}). There is something wrong in map file.", terrain_layer.size(), map_size);
 		}
@@ -64,20 +64,20 @@ void Map::loadFromFile(const std::string& filename) {
 		_tiles.push_back(tileAtlas.at(terrain_layer[i]));
 		// Формат хранения материальных благ в файле: 32-битное число, каждый байт обозначает доступный на тайле тип ресурса, т.о.
 		// на одном тайле может быть доступно до четырёх типов ресурсов.
-		GoodsTypeId goodsType1 = static_cast<GoodsTypeId>((goods_layer[i] & 0xFF000000) >> 24);
-		GoodsTypeId goodsType2 = static_cast<GoodsTypeId>((goods_layer[i] & 0x00FF0000) >> 16);
-		GoodsTypeId goodsType3 = static_cast<GoodsTypeId>((goods_layer[i] & 0x0000FF00) >> 8);
-		GoodsTypeId goodsType4 = static_cast<GoodsTypeId>((goods_layer[i] & 0x000000FF));
+		WaresTypeId waresType1 = static_cast<WaresTypeId>((wares_layer[i] & 0xFF000000) >> 24);
+		WaresTypeId waresType2 = static_cast<WaresTypeId>((wares_layer[i] & 0x00FF0000) >> 16);
+		WaresTypeId waresType3 = static_cast<WaresTypeId>((wares_layer[i] & 0x0000FF00) >> 8);
+		WaresTypeId waresType4 = static_cast<WaresTypeId>((wares_layer[i] & 0x000000FF));
 
-		GoodsTypeId goodsType;
+		WaresTypeId waresType;
 		uint32_t bitMask = 0xFF000000;
 		unsigned int shift = 24;
-		for (unsigned int goodsIdx = 0; goodsIdx < 4; goodsIdx++) {
-			goodsType = static_cast<GoodsTypeId>((goods_layer[i] & bitMask) >> shift);
+		for (unsigned int waresIdx = 0; waresIdx < 4; waresIdx++) {
+			waresType = static_cast<WaresTypeId>((wares_layer[i] & bitMask) >> shift);
 			shift -= 8;
 			bitMask = bitMask >> 8;
-			if (goodsType != GoodsTypeId::Unknown) {
-				_tiles.back().addGoods(goodsType, 1);
+			if (waresType != WaresTypeId::Unknown) {
+				_tiles.back().addWares(waresType, 1);
 			};
 		}
 		sf::Vector2f screenCoords = mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
@@ -145,19 +145,19 @@ void Map::draw(sf::RenderWindow& window) {
 	for (auto& tile : _tiles) {
 		sf::Sprite tileSprite = tile.getSprite();
 		window.draw(tileSprite);
-		if (_isGoodsVisible) {
-			auto goodsStack = tile.getGoodsStackList();
-			unsigned int numGoods = goodsStack.size();
+		if (_areWaresVisible) {
+			auto waresStack = tile.getWaresStackList();
+			unsigned int numWares = waresStack.size();
 			// На тайл влезет примерно (tileWidth - iconWidth) * 2 иконок товаров
-			for (unsigned int g = 0; g < numGoods; g++) {
-				sf::Sprite goodsSprite;
-				goodsSprite.setTexture(*_assets.getGoodsSpecification(goodsStack[g].type).icon);
-				auto gsTexSize = goodsSprite.getTexture()->getSize();
-				auto goodsSpritePos = tileSprite.getPosition();
-				goodsSpritePos.x += (_tileWidth / 2) + ((gsTexSize.x) * (g - (numGoods / 2)));
-				goodsSpritePos.y += (_tileHeight / 2) - (gsTexSize.y / 2);
-				goodsSprite.setPosition(goodsSpritePos);
-				window.draw(goodsSprite);
+			for (unsigned int g = 0; g < numWares; g++) {
+				sf::Sprite waresSprite;
+				waresSprite.setTexture(*_assets.getWaresSpecification(waresStack[g].type).icon);
+				auto gsTexSize = waresSprite.getTexture()->getSize();
+				auto waresSpritePos = tileSprite.getPosition();
+				waresSpritePos.x += (_tileWidth / 2) + ((gsTexSize.x) * (g - (numWares / 2)));
+				waresSpritePos.y += (_tileHeight / 2) - (gsTexSize.y / 2);
+				waresSprite.setPosition(waresSpritePos);
+				window.draw(waresSprite);
 			}
 		}
 	}

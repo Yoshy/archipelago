@@ -9,7 +9,7 @@
 		"cost": [
 		],
 		"occupation": -5,
-		"provides_goods": [
+		"provides_wares": [
 			{ "Wood": 5 }
 		],
 		"production": [
@@ -26,7 +26,7 @@
 			{ "Wood": 5 }
 		],
 		"occupation": 1,
-		"provides_goods": [
+		"provides_wares": [
 		],
 		"production": [
 			{ "Wood": 1 },
