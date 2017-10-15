@@ -1,10 +1,10 @@
 #include <fstream>
 #include <thread>
-#include "game.h"
-#include "asset_registry.h"
 #include <SFML/Window.hpp>
 #include <cmath>
-#include "json.hpp"
+#include <json.hpp>
+#include "game.h"
+#include "asset_registry.h"
 
 namespace Archipelago {
 

@@ -1,7 +1,7 @@
 #include <fstream>
 #include <map>
-#include "spdlog/spdlog.h"
-#include "json.hpp"
+#include <spdlog/spdlog.h>
+#include <json.hpp>
 #include "map.h"
 #include "asset_registry.h"
 

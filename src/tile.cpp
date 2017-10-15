@@ -1,8 +1,4 @@
 #include "tile.h"
-#include <memory>
-#include "spdlog/spdlog.h"
-#include "asset_registry.h"
-
 
 using namespace Archipelago;
 

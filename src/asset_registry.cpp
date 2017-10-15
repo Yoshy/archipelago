@@ -1,8 +1,8 @@
 #include <fstream>
+#include <spdlog/spdlog.h>
+#include <json.hpp>
 #include "asset_registry.h"
 #include "game.h"
-#include "spdlog/spdlog.h"
-#include "json.hpp"
 
 using namespace Archipelago;
 

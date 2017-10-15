@@ -1,9 +1,9 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
-#include "SFML/Graphics.hpp"
 #include <string>
-#include <memory>
+
+class sf::Texture;
 
 namespace Archipelago {
 
@@ -11,7 +11,7 @@ namespace Archipelago {
 
 	struct WaresSpecification {
 		std::string name;
-		sf::Texture* icon;
+		sf::Texture* icon; // non-owning pointer
 	};
 
 	struct WaresStack {

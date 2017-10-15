@@ -1,8 +1,9 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include "SFML/Graphics.hpp"
 #include <string>
+#include <vector>
+#include <SFML/Graphics.hpp>
 #include "wares.h"
 
 namespace Archipelago {
