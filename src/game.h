@@ -4,14 +4,13 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 #include <SFML/Graphics.hpp>
-#include <SFGUI/SFGUI.hpp>
-#include <SFGUI/Widgets.hpp>
+#include "asset_registry.h"
+#include "ui.h"
 #include "map.h"
 
-namespace Archipelago {	
+namespace Archipelago {
 
 	extern const std::string& loggerName;
-	class AssetRegistry;
 
 	/** Main game class, entry point.
 	* Loads, configures and initialises all the components
@@ -24,44 +23,54 @@ namespace Archipelago {
 		void init();
 		void run();
 		void shutdown();
+
+		sf::RenderWindow& getRenderWindow() const { return *_window; };
+		const float getRenderWindowWidth() const { return _windowWidth; };
+		const float getRenderWindowHeight() const { return _windowHeight; };
+		std::string composeGameTimeString(void);
+		const std::string& getStatusString() const { return _statusString; };
+		const size_t getSettlementWaresNumber() const { return _settlementWares.size(); };
+		const sf::Image getWareIcon(unsigned int idx) const { return _assetRegistry->getWaresSpecification(_settlementWares[idx].type).icon->copyToImage(); };
+		const unsigned int getWareAmount(unsigned int idx) const { return _settlementWares[idx].amount; };
 	private:
-		// game mechanic stuff
-		unsigned int _gameTime; // Months since game start
-		unsigned int _currentGameMonthDuration;
-		std::string _getCurrentGameTimeString(void);
-		std::vector<WaresStack> _settlementGoods;
-		void _initSettlementGoods();
-		// UI stuff
-		sfg::Window::Ptr _uiTopStatusBar;
-		sfg::Window::Ptr _uiBottomStatusBar;
-		sfg::Window::Ptr _uiMainInterfaceWindow;
-		void _resizeUi(float width, float height);
-		void _showTerrainInfo();
-		// game internal stuff
-		std::string _curMapName;
-		Tile* _prevTile;
-		unsigned int _numThreads;
-		unsigned int _fps;
-		float _curCameraZoom;
-		bool _isMovingCamera;
-		sf::Vector2i _prevMouseCoords;
-		sf::Clock _clock;
 		void _initGraphics();
 		void _loadAssets();
+		void _initSettlementGoods();
+		void _processEvents(sf::Event event);
+		void _processInput(const sf::Time& frameTime);
+		void _update(const sf::Time& frameTime);
 		void _draw();
 		void _moveCamera(float offsetX, float offsetY);
-		void _zoomCamera(float zoomFactor);
 		void _getMousePositionString(std::string& str);
-		// game class posessions
+
+		// game posessions
 		std::shared_ptr<spdlog::logger> _logger;
 		std::unique_ptr<Archipelago::AssetRegistry> _assetRegistry;
 		std::unique_ptr<sf::RenderWindow> _window;
-		std::unique_ptr<sfg::SFGUI> _sfgui;
-		std::unique_ptr<sfg::Desktop> _uiDesktop;
+		std::unique_ptr<Archipelago::Ui> _ui;
+
 		// game options (see config.json)
 		bool _isFullscreen;
 		bool _enable_vsync;
-		int _windowWidth, _windowHeight;
+		float _windowWidth, _windowHeight;
+
+		// game mechanic stuff
+		std::string _curMapName;
+		unsigned int _gameTime; // Months since game start
+		unsigned int _currentGameMonthDuration; // Game month duration in realtime seconds
+		std::vector<WaresStack> _settlementWares; // Current stock of settlement wares
+		
+		// auxilary vars
+		Tile* _prevTile;
+		std::string _mousePositionString;
+		std::string _statusString;
+		sf::Time _accumulatedTime{ sf::Time::Zero };
+		int _cameraMoveIntervalCooldown; // milliseconds
+		unsigned int _numThreads;
+		unsigned int _fps;
+		bool _isMovingCamera;
+		sf::Vector2i _prevMouseCoords;
+		sf::Clock _clock;
 	};
 
 }
