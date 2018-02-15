@@ -1,12 +1,11 @@
-#ifndef GAME_H
-#define GAME_H
+#pragma once
 
 #include <spdlog/spdlog.h>
 #include <memory>
 #include <SFML/Graphics.hpp>
+#include <ECS.h>
 #include "asset_registry.h"
 #include "ui.h"
-#include "map.h"
 
 namespace Archipelago {
 
@@ -25,6 +24,7 @@ namespace Archipelago {
 		void shutdown();
 
 		sf::RenderWindow& getRenderWindow() const { return *_window; };
+		Archipelago::AssetRegistry& getAssetRegistry() const { return *_assetRegistry; }
 		const float getRenderWindowWidth() const { return _windowWidth; };
 		const float getRenderWindowHeight() const { return _windowHeight; };
 		std::string composeGameTimeString(void);
@@ -34,7 +34,6 @@ namespace Archipelago {
 		const unsigned int getWareAmount(unsigned int idx) const { return _settlementWares[idx].amount; };
 	private:
 		void _initGraphics();
-		void _loadAssets();
 		void _initSettlementGoods();
 		void _processEvents(sf::Event event);
 		void _processInput(const sf::Time& frameTime);
@@ -48,6 +47,7 @@ namespace Archipelago {
 		std::unique_ptr<Archipelago::AssetRegistry> _assetRegistry;
 		std::unique_ptr<sf::RenderWindow> _window;
 		std::unique_ptr<Archipelago::Ui> _ui;
+		ECS::World* _world;
 
 		// game options (see config.json)
 		bool _isFullscreen;
@@ -61,7 +61,7 @@ namespace Archipelago {
 		std::vector<WaresStack> _settlementWares; // Current stock of settlement wares
 		
 		// auxilary vars
-		Tile* _prevTile;
+		//Tile* _prevTile;
 		std::string _mousePositionString;
 		std::string _statusString;
 		sf::Time _accumulatedTime{ sf::Time::Zero };
@@ -74,5 +74,3 @@ namespace Archipelago {
 	};
 
 }
-
-#endif // GAME_H

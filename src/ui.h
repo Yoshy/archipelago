@@ -15,7 +15,6 @@ namespace Archipelago {
 		void update(float seconds);
 		void handleEvent(const sf::Event& event);
 		void resizeUi(float width, float height);
-		void zoomCamera(float zoomFactor);
 	private:
 		Archipelago::Game& _game;
 		std::unique_ptr<sfg::SFGUI> _sfgui;
@@ -23,7 +22,5 @@ namespace Archipelago {
 		sfg::Window::Ptr _uiTopStatusBar;
 		sfg::Window::Ptr _uiBottomStatusBar;
 		sfg::Window::Ptr _uiMainInterfaceWindow;
-
-		float _curCameraZoom;
 	};
 }

@@ -6,6 +6,8 @@
 #include "game.h"
 #include "asset_registry.h"
 
+#include "map_system.h"
+
 namespace Archipelago {
 
 	// General game constants
@@ -25,6 +27,7 @@ namespace Archipelago {
 
 using namespace Archipelago;
 using namespace spdlog;
+using namespace ECS;
 
 Game::Game(): _isFullscreen(true), _windowWidth(800), _windowHeight(600) {
 
@@ -85,19 +88,30 @@ void Game::init() {
 	_numThreads = std::thread::hardware_concurrency();
 	_logger->info("Host has {} cores", _numThreads);
 
-	// Init game subsystems
+
+	// Init game variables
 	_mousePositionString.reserve(stringReservationSize);
 	_statusString.reserve(stringReservationSize);
 	_cameraMoveIntervalCooldown = cameraMoveInterval;
 	_curMapName = defaultMapName;
-	_loadAssets();
+
+	// Init game subsystems
+	_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
+	_assetRegistry->prepareWaresAtlas();
+	_world = World::createWorld();
+	_world->registerSystem(new MapSystem(*this));
+	_world->emit<LoadMapEvent>({ "assets/maps/" + _curMapName + ".json" });
+
 	_initSettlementGoods();
 	_initGraphics();
 	_gameTime = 0;
 	_currentGameMonthDuration = gameMonthDurationNormal;
+
+
 }
 
 void Game::shutdown() {
+	_world->destroyWorld();
 	_logger->info("** Archipelago finishing **");
 	_logger->flush();
 }
@@ -132,24 +146,12 @@ void Game::_initGraphics() {
 	_window->setVerticalSyncEnabled(_enable_vsync);
 
 	// Init viewport
-	sf::View v = _window->getView();
-	v.setCenter(_assetRegistry->getMap(_curMapName).getCenter());
-	_window->setView(v);
+	_world->emit<MoveCameraToMapCenterEvent>({ 0 });
 	_window->setMouseCursorVisible(true);
 	_isMovingCamera = false;
 
 	// Init UI
 	_ui = std::make_unique<Archipelago::Ui>(*this);
-}
-
-void Game::_loadAssets() {
-	if (!_assetRegistry) {
-		_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
-	}
-	_assetRegistry->prepareWaresAtlas();
-	// map must be loaded last, because it needs other assets, such as wares
-	_assetRegistry->loadMap(_curMapName, "assets/maps/" + _curMapName + ".json");
-	_prevTile = nullptr;
 }
 
 std::string Game::composeGameTimeString() {
@@ -224,11 +226,11 @@ void Game::_processEvents(sf::Event event) {
 		break;
 	case sf::Event::MouseWheelMoved:
 		if (event.mouseWheel.delta < 0) {
-			_ui->zoomCamera(1.5f);
+			_world->emit<ZoomCameraEvent>({ 1.5f });
 		}
 		else
 		{
-			_ui->zoomCamera(0.5f);
+			_world->emit<ZoomCameraEvent>({ 0.5f });
 		}
 		break;
 	case sf::Event::Closed:
@@ -264,10 +266,10 @@ void Game::_processInput(const sf::Time& frameTime) {
 	}
 	// Keyboard state processing
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-		_assetRegistry->getMap(_curMapName).setWaresVisibility(true);
+		//_assetRegistry->getMap(_curMapName).setWaresVisibility(true);
 	}
 	else {
-		_assetRegistry->getMap(_curMapName).setWaresVisibility(false);
+		//_assetRegistry->getMap(_curMapName).setWaresVisibility(false);
 	}
 	if (canMoveCamera) {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
@@ -307,39 +309,31 @@ void Game::_draw() {
 	_window->clear();
 
 	// Render world
-	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
-	Tile* tile = _assetRegistry->getMap(_curMapName).getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
-	if (tile) {
-		if (_prevTile) {
-			_prevTile->getSprite().setColor(sf::Color::White);
-		}
-		tile->getSprite().setColor(sf::Color(255, 255, 255, 127));
-		_prevTile = tile;
-	}
-	_assetRegistry->getMap(_curMapName).draw(*_window);
+	//sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
+	//sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
+	//Tile* tile = _assetRegistry->getMap(_curMapName).getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
+	//if (tile) {
+	//	if (_prevTile) {
+	//		_prevTile->getSprite().setColor(sf::Color::White);
+	//	}
+	//	tile->getSprite().setColor(sf::Color(255, 255, 255, 127));
+	//	_prevTile = tile;
+	//}
+	//_assetRegistry->getMap(_curMapName).draw(*_window);
 
 	// Display everything
+	_world->tick(0);
 	_ui->display();
 	_window->display();
 }
 
 void Game::_moveCamera(float offsetX, float offsetY) {
-	sf::View v = _window->getView();
-	sf::Vector2f viewCenter = v.getCenter();
-	viewCenter.x = viewCenter.x + offsetX;
-	viewCenter.y = viewCenter.y + offsetY;
-	sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(viewCenter);
-	if (mapCoords.x < 0 || mapCoords.y < 0 || mapCoords.x > _assetRegistry->getMap(_curMapName).getMapWidth() || mapCoords.y > _assetRegistry->getMap(_curMapName).getMapHeight()) {
-		return;
-	}
-	v.move(offsetX, offsetY);
-	_window->setView(v);
+	_world->emit<MoveCameraEvent>({ offsetX, offsetY });
 }
 
 void Game::_getMousePositionString(std::string& str) {
 	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
-	str = "Screen X: " + std::to_string(screenCoords.x) + " Y: " + std::to_string(screenCoords.y) + "; ";
-	str += "World X:" + std::to_string(mapCoords.x) + " Y: " + std::to_string(mapCoords.y) + "; ";
+	//sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
+	//str = "Screen X: " + std::to_string(screenCoords.x) + " Y: " + std::to_string(screenCoords.y) + "; ";
+	//str += "World X:" + std::to_string(mapCoords.x) + " Y: " + std::to_string(mapCoords.y) + "; ";
 }
