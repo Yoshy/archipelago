@@ -11,7 +11,7 @@ namespace Archipelago {
 	class Ui {
 	public:
 		Ui(Game& game);
-		void display();
+		void render();
 		void update(float seconds);
 		void handleEvent(const sf::Event& event);
 		void resizeUi(float width, float height);

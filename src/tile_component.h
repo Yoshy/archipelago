@@ -9,10 +9,12 @@ namespace Archipelago {
 	* This component contains data for graphical representation of one tile on the map
 	*/
 	struct TileComponent {
-		TileComponent() : _rising(0) {};
-		TileComponent(uint32_t rising, sf::Sprite sprite) : _rising(rising), _sprite(sprite) {};
-		uint32_t _rising;
-		sf::Sprite _sprite;
+		TileComponent() : rising(0), x(0), y(0) {};
+		TileComponent(uint32_t _rising, sf::Sprite _sprite, unsigned int _x, unsigned int _y) : rising(_rising), sprite(_sprite), x(_x), y(_y) {};
+		unsigned int x;
+		unsigned int y;
+		uint32_t rising;
+		sf::Sprite sprite;
 	};
 
 } // namespace Archipelago

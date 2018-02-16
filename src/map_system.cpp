@@ -14,8 +14,10 @@ void MapSystem::configure(World* world) {
 	spdlog::get(loggerName)->trace("MapSystem::configure started");
 	world->subscribe<LoadMapEvent>(this);
 	world->subscribe<MoveCameraEvent>(this);
-	world->subscribe<ZoomCameraEvent>(this);
 	world->subscribe<MoveCameraToMapCenterEvent>(this);
+	world->subscribe<ZoomCameraEvent>(this);
+	world->subscribe<ConvertScreenToMapCoordsEvent>(this);
+	world->subscribe<ConvertMapToScreenCoordsEvent>(this);
 	_curCameraZoom = 1.0f;
 }
 
@@ -24,6 +26,9 @@ void MapSystem::unconfigure(World* world) {
 	world->unsubscribe<LoadMapEvent>(this);
 	world->unsubscribe<MoveCameraEvent>(this);
 	world->unsubscribe<MoveCameraToMapCenterEvent>(this);
+	world->unsubscribe<ZoomCameraEvent>(this);
+	world->unsubscribe<ConvertScreenToMapCoordsEvent>(this);
+	world->unsubscribe<ConvertMapToScreenCoordsEvent>(this);
 }
 
 void MapSystem::receive(World* world, const LoadMapEvent& event) {
@@ -69,13 +74,12 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 		_game.getAssetRegistry().loadTexture(tileName, texFileName);
 		tileAtlas.insert(std::pair<int, TileComponent>(id, std::move(TileComponent())));
 		TileComponent& tileComponent = tileAtlas.at(id);
-		//tileComponent.setName(tileName);
-		tileComponent._sprite.setTexture(*_game.getAssetRegistry().getTexture(tileName));
-		tileComponent._sprite.setTextureRect(sf::IntRect(texOffsetX, 0, _tileWidth, _game.getAssetRegistry().getTexture(tileName)->getSize().y));
-		tileComponent._rising = tileRising;
+		tileComponent.sprite.setTexture(*_game.getAssetRegistry().getTexture(tileName));
+		tileComponent.sprite.setTextureRect(sf::IntRect(texOffsetX, 0, _tileWidth, _game.getAssetRegistry().getTexture(tileName)->getSize().y));
+		tileComponent.rising = tileRising;
 	}
 	// Формируем карту. Каждый тайл - уникальный объект, что позволит при необходимости кастомизировать свойства каждого отдельного тайла карты при необходимости.
-	double mapX = 0, mapY = 0;
+	unsigned int mapX = 0, mapY = 0;
 	TileComponent tmpTileComponent;
 	for (unsigned int i = 0; i < map_size; i++) {
 		tmpTileComponent = tileAtlas.at(terrain_layer[i]);
@@ -97,11 +101,11 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 		//		_tiles.back().addWares(waresType, 1);
 		//	};
 		//}
-		sf::Vector2f screenCoords = mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
-		screenCoords.y = screenCoords.y - tmpTileComponent._rising;
-		tmpTileComponent._sprite.setPosition(screenCoords);
+		sf::Vector2f screenCoords = _mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
+		screenCoords.y = screenCoords.y - tmpTileComponent.rising;
+		tmpTileComponent.sprite.setPosition(screenCoords);
 		Entity* ent = world->create();
-		ent->assign<TileComponent>(tmpTileComponent._rising, tmpTileComponent._sprite);
+		ent->assign<TileComponent>(tmpTileComponent.rising, tmpTileComponent.sprite, mapX, mapY);
 		mapX++;
 		if (mapX >= _mapWidth) {
 			mapX = 0;
@@ -117,8 +121,8 @@ void MapSystem::receive(World* world, const MoveCameraEvent& event) {
 	sf::Vector2f viewCenter = v.getCenter();
 	viewCenter.x = viewCenter.x + event.offsetX;
 	viewCenter.y = viewCenter.y + event.offsetY;
-	sf::Vector2f mapCoords = screenToMapCoords(viewCenter);
-	if (mapCoords.x < 0 || mapCoords.y < 0 || mapCoords.x > _getMapWidth() || mapCoords.y > _getMapHeight()) {
+	sf::Vector2f mapCoords = _screenToMapCoords(viewCenter);
+	if (mapCoords.x < 0 || mapCoords.y < 0 || mapCoords.x > _mapWidth || mapCoords.y > _mapHeight) {
 		return;
 	}
 	v.move(event.offsetX, event.offsetY);
@@ -142,24 +146,24 @@ void MapSystem::receive(World* world, const ZoomCameraEvent& event) {
 	_curCameraZoom *= event.zoomFactor;
 }
 
-const sf::Vector2f MapSystem::mapToScreenCoords(sf::Vector2f mapCoords) {
+void MapSystem::receive(World* world, const ConvertScreenToMapCoordsEvent& event) {
+	event.coords = _screenToMapCoords(event.coords);
+}
+
+void MapSystem::receive(World* world, const ConvertMapToScreenCoordsEvent& event) {
+	event.coords = _mapToScreenCoords(event.coords);
+}
+
+const sf::Vector2f MapSystem::_mapToScreenCoords(sf::Vector2f mapCoords) {
 	sf::Vector2f screenCoords;
 	screenCoords.x = (mapCoords.x - mapCoords.y) * _tileWidth / 2;
 	screenCoords.y = (mapCoords.x + mapCoords.y) * _tileHeight / 2;
 	return screenCoords;
 }
 
-const sf::Vector2f MapSystem::screenToMapCoords(sf::Vector2f screenCoords) {
+const sf::Vector2f MapSystem::_screenToMapCoords(sf::Vector2f screenCoords) {
 	sf::Vector2f mapCoords;
 	mapCoords.x = (screenCoords.x / (_tileWidth / 2) + screenCoords.y / (_tileHeight / 2)) / 2 - 0.5f;
 	mapCoords.y = (screenCoords.y / (_tileHeight / 2) - (screenCoords.x / (_tileWidth / 2))) / 2 + 0.5f;
 	return sf::Vector2f(mapCoords);
-}
-
-unsigned int MapSystem::_getMapWidth() {
-	return _mapWidth;
-}
-
-unsigned int MapSystem::_getMapHeight() {
-	return _mapHeight;
 }

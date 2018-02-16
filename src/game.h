@@ -33,13 +33,12 @@ namespace Archipelago {
 		const sf::Image getWareIcon(unsigned int idx) const { return _assetRegistry->getWaresSpecification(_settlementWares[idx].type).icon->copyToImage(); };
 		const unsigned int getWareAmount(unsigned int idx) const { return _settlementWares[idx].amount; };
 	private:
-		void _initGraphics();
+		void _initRenderSystem();
 		void _initSettlementGoods();
 		void _processEvents(sf::Event event);
 		void _processInput(const sf::Time& frameTime);
 		void _update(const sf::Time& frameTime);
 		void _draw();
-		void _moveCamera(float offsetX, float offsetY);
 		void _getMousePositionString(std::string& str);
 
 		// game posessions
@@ -61,7 +60,6 @@ namespace Archipelago {
 		std::vector<WaresStack> _settlementWares; // Current stock of settlement wares
 		
 		// auxilary vars
-		//Tile* _prevTile;
 		std::string _mousePositionString;
 		std::string _statusString;
 		sf::Time _accumulatedTime{ sf::Time::Zero };

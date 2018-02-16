@@ -76,7 +76,7 @@ Ui::Ui(Game& game): _game(game)
 	resizeUi(_game.getRenderWindowWidth(), _game.getRenderWindowHeight());
 }
 
-void Ui::display()
+void Ui::render()
 {
 	_sfgui->Display(_game.getRenderWindow());
 }

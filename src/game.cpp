@@ -5,7 +5,6 @@
 #include <json.hpp>
 #include "game.h"
 #include "asset_registry.h"
-
 #include "map_system.h"
 
 namespace Archipelago {
@@ -96,14 +95,18 @@ void Game::init() {
 	_curMapName = defaultMapName;
 
 	// Init game subsystems
+	_initRenderSystem();
 	_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
 	_assetRegistry->prepareWaresAtlas();
 	_world = World::createWorld();
 	_world->registerSystem(new MapSystem(*this));
 	_world->emit<LoadMapEvent>({ "assets/maps/" + _curMapName + ".json" });
+	_world->emit<MoveCameraToMapCenterEvent>({ true });
 
 	_initSettlementGoods();
-	_initGraphics();
+	_ui = std::make_unique<Archipelago::Ui>(*this);
+
+	// Game time variables
 	_gameTime = 0;
 	_currentGameMonthDuration = gameMonthDurationNormal;
 
@@ -134,7 +137,7 @@ void Game::run() {
 	}
 }
 
-void Game::_initGraphics() {
+void Game::_initRenderSystem() {
 	// Init render window
 	int windowStyle = sf::Style::Default;
 	sf::VideoMode videoMode(static_cast<unsigned int>(_windowWidth), static_cast<unsigned int>(_windowHeight));
@@ -143,15 +146,9 @@ void Game::_initGraphics() {
 		windowStyle = sf::Style::Fullscreen;
 	};
 	_window = std::make_unique<sf::RenderWindow>(videoMode, gameName, windowStyle);
-	_window->setVerticalSyncEnabled(_enable_vsync);
-
-	// Init viewport
-	_world->emit<MoveCameraToMapCenterEvent>({ 0 });
+	_window->setVerticalSyncEnabled(_enable_vsync);	
 	_window->setMouseCursorVisible(true);
 	_isMovingCamera = false;
-
-	// Init UI
-	_ui = std::make_unique<Archipelago::Ui>(*this);
 }
 
 std::string Game::composeGameTimeString() {
@@ -218,8 +215,10 @@ void Game::_processEvents(sf::Event event) {
 		}
 	case sf::Event::MouseMoved:
 		if (_isMovingCamera) {
-			_moveCamera(static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
-				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).y));
+			_world->emit<MoveCameraEvent>({
+				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
+				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).y)
+			});
 			_prevMouseCoords = sf::Mouse::getPosition(*_window);
 		}
 		_getMousePositionString(_mousePositionString);
@@ -273,16 +272,16 @@ void Game::_processInput(const sf::Time& frameTime) {
 	}
 	if (canMoveCamera) {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
-			_moveCamera(-cameraMoveStep, 0.0f);
+			_world->emit<MoveCameraEvent>({ -cameraMoveStep, 0.0f });
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::D)) {
-			_moveCamera(cameraMoveStep, 0.0f);
+			_world->emit<MoveCameraEvent>({ cameraMoveStep, 0.0f });
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::W)) {
-			_moveCamera(0.0f, -cameraMoveStep);
+			_world->emit<MoveCameraEvent>({ 0.0f, -cameraMoveStep });
 		}
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
-			_moveCamera(0.0f, cameraMoveStep);
+			_world->emit<MoveCameraEvent>({ 0.0f, cameraMoveStep });
 		}
 	}
 }
@@ -301,6 +300,8 @@ void Game::_update(const sf::Time& frameTime) {
 		_accumulatedTime = sf::Time::Zero;
 	}
 
+	_world->tick(0);
+
 	// Update UI
 	_ui->update(frameTime.asSeconds());
 }
@@ -308,32 +309,31 @@ void Game::_update(const sf::Time& frameTime) {
 void Game::_draw() {
 	_window->clear();
 
-	// Render world
-	//sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	//sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
-	//Tile* tile = _assetRegistry->getMap(_curMapName).getTileAt(static_cast<int>(floor(mapCoords.x)), static_cast<int>(floor(mapCoords.y)));
-	//if (tile) {
-	//	if (_prevTile) {
-	//		_prevTile->getSprite().setColor(sf::Color::White);
-	//	}
-	//	tile->getSprite().setColor(sf::Color(255, 255, 255, 127));
-	//	_prevTile = tile;
-	//}
-	//_assetRegistry->getMap(_curMapName).draw(*_window);
+	// Render map
+	sf::Vector2f mouseScreenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
+	sf::Vector2f mouseMapCoords = mouseScreenCoords;
+	_world->emit<ConvertScreenToMapCoordsEvent>({ mouseMapCoords });
+	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
+		// Highlight tile, if it lies under mouse cursor
+		tile->sprite.setColor(sf::Color::White);
+		if (static_cast<int>(mouseMapCoords.x) == tile->x && static_cast<int>(mouseMapCoords.y) == tile->y) {
+			tile->sprite.setColor(sf::Color(255, 255, 255, 127));
+		}
+		// Draw tile
+		getRenderWindow().draw(tile->sprite);
+	});
 
-	// Display everything
-	_world->tick(0);
-	_ui->display();
+	// Render UI
+	_ui->render();
+
+	// Show everything on screen
 	_window->display();
 }
 
-void Game::_moveCamera(float offsetX, float offsetY) {
-	_world->emit<MoveCameraEvent>({ offsetX, offsetY });
-}
-
 void Game::_getMousePositionString(std::string& str) {
-	sf::Vector2f screenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	//sf::Vector2f mapCoords = _assetRegistry->getMap(_curMapName).screenToMapCoords(screenCoords);
-	//str = "Screen X: " + std::to_string(screenCoords.x) + " Y: " + std::to_string(screenCoords.y) + "; ";
-	//str += "World X:" + std::to_string(mapCoords.x) + " Y: " + std::to_string(mapCoords.y) + "; ";
+	sf::Vector2f mouseScreenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
+	sf::Vector2f mouseMapCoords = mouseScreenCoords;
+	_world->emit<ConvertScreenToMapCoordsEvent>({ mouseMapCoords });
+	str = "Screen X: " + std::to_string(mouseScreenCoords.x) + " Y: " + std::to_string(mouseScreenCoords.y) + "; ";
+	str += "World X:" + std::to_string(mouseMapCoords.x) + " Y: " + std::to_string(mouseMapCoords.y) + "; ";
 }
