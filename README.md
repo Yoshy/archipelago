@@ -5,8 +5,9 @@ Settlement building tile-based mini-game.
 * C++11 compiler
 * SFML 2.x (http://sfml-dev.org)
 * SFGUI (https://github.com/TankOs/SFGUI)
-* nlohmann JSON library (https://github.com/nlohmann/json)
+* nlohmann's JSON library (https://github.com/nlohmann/json)
 * spdlog (https://github.com/gabime/spdlog)
+* redxdev's single-header entity component system (https://github.com/redxdev/ECS)
 
 # Build
 

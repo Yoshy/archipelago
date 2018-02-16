@@ -1,6 +1,7 @@
 #include <fstream>
 #include <spdlog/spdlog.h>
 #include <json.hpp>
+#include <ECS.h>
 #include "asset_registry.h"
 #include "game.h"
 
@@ -17,12 +18,12 @@ void AssetRegistry::loadTexture(const std::string& assetName, const std::string&
 	spdlog::get(loggerName)->trace("Texture atlas contains {} textures", _textureAtlas.size());
 }
 
-void AssetRegistry::loadMap(const std::string& assetName, const std::string& filename) {
-	Archipelago::Map map(*this);
-	map.loadFromFile(filename);
-	_mapAtlas.insert(std::pair<std::string, Archipelago::Map>(assetName, std::move(map)));
-	spdlog::get(loggerName)->trace("Loaded map '{}' from file '{}'", assetName, filename);
-}
+//void AssetRegistry::loadMap(const std::string& assetName, const std::string& filename, World* world) {
+//	Archipelago::Map map(*this);
+//	map.loadFromFile(filename, world);
+//	_mapAtlas.insert(std::pair<std::string, Archipelago::Map>(assetName, std::move(map)));
+//	spdlog::get(loggerName)->trace("Loaded map '{}' from file '{}'", assetName, filename);
+//}
 
 sf::Texture* AssetRegistry::getTexture(const std::string& textureName) {
 	auto m = _textureAtlas.find(textureName);
@@ -34,15 +35,15 @@ sf::Texture* AssetRegistry::getTexture(const std::string& textureName) {
 	return nullptr;
 }
 
-Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
-	auto m = _mapAtlas.find(mapName);
-	if (m != _mapAtlas.end()) {
-		return m->second;
-	}
-	std::string s("Map '" + mapName + "' not found in registry");
-	spdlog::get(loggerName)->error(s);
-	throw std::out_of_range(s);
-}
+//Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
+//	auto m = _mapAtlas.find(mapName);
+//	if (m != _mapAtlas.end()) {
+//		return m->second;
+//	}
+//	std::string s("Map '" + mapName + "' not found in registry");
+//	spdlog::get(loggerName)->error(s);
+//	throw std::out_of_range(s);
+//}
 
 void AssetRegistry::prepareWaresAtlas() {
 	spdlog::get(loggerName)->trace("AssetRegistry::prepareWaresAtlas started...");

@@ -8,8 +8,6 @@ namespace Archipelago
 	const std::string& ui_TopStatusBar_TimeLabelId{ "tsb_time_label" };
 	const std::string& ui_TopStatusBar_GoodsLabelId{ "tsb_wares_label" };
 	const std::string& ui_BottomStatusBar_LabelId{ "bsb_label" };
-	const float maxCameraZoom{ 3.0f };
-	const float minCameraZoom{ 0.2f };
 }
 
 using namespace Archipelago;
@@ -76,10 +74,9 @@ Ui::Ui(Game& game): _game(game)
 	_uiMainInterfaceWindow->Add(mainNotebook);
 	_uiDesktop->Add(_uiMainInterfaceWindow);
 	resizeUi(_game.getRenderWindowWidth(), _game.getRenderWindowHeight());
-	_curCameraZoom = 1.0f;
 }
 
-void Ui::display()
+void Ui::render()
 {
 	_sfgui->Display(_game.getRenderWindow());
 }
@@ -118,13 +115,3 @@ void Ui::resizeUi(float width, float height)
 	v.setSize(width, height);
 	_game.getRenderWindow().setView(v);
 };
-
-void Ui::zoomCamera(float zoomFactor) {
-	if (_curCameraZoom * zoomFactor > maxCameraZoom || _curCameraZoom * zoomFactor < minCameraZoom) {
-		return;
-	}
-	sf::View v = _game.getRenderWindow().getView();
-	v.zoom(zoomFactor);
-	_game.getRenderWindow().setView(v);
-	_curCameraZoom *= zoomFactor;
-}
