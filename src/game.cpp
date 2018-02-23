@@ -12,7 +12,7 @@ namespace Archipelago {
 	// General game constants
 	const std::string& gameName{ "Archipelago" };
 	extern const std::string& loggerName{ gameName + "_logger" };
-	const std::string& defaultMapName{ "default_map" };
+	const std::string& mapFileName{ "assets/maps/default_map.json" };
 	const size_t stringReservationSize{ 100 };
 	// Time constants
 	const unsigned int gameMonthDurationNormal{ 30 };
@@ -89,18 +89,21 @@ void Game::init() {
 
 
 	// Init game variables
-	_mousePositionString.reserve(stringReservationSize);
 	_statusString.reserve(stringReservationSize);
 	_cameraMoveIntervalCooldown = cameraMoveInterval;
-	_curMapName = defaultMapName;
+	_mouseState = MouseState::Normal;
 
 	// Init game subsystems
 	_initRenderSystem();
 	_assetRegistry = std::make_unique<Archipelago::AssetRegistry>();
 	_assetRegistry->prepareWaresAtlas();
+	_assetRegistry->prepareNaturalResourcesAtlas();
+	_assetRegistry->prepareBuildingAtlas();
+	_assetRegistry->loadTexture("mouse_cursor_normal", "assets/textures/mouse_cursor_normal.png");
+	_setMouseCursorNormal();
 	_world = World::createWorld();
-	_world->registerSystem(new MapSystem(*this));
-	_world->emit<LoadMapEvent>({ "assets/maps/" + _curMapName + ".json" });
+	_world->registerSystem(new Archipelago::MapSystem(*this));
+	_world->emit<LoadMapEvent>({ mapFileName });
 	_world->emit<MoveCameraToMapCenterEvent>({ true });
 
 	_initSettlementGoods();
@@ -137,20 +140,6 @@ void Game::run() {
 	}
 }
 
-void Game::_initRenderSystem() {
-	// Init render window
-	int windowStyle = sf::Style::Default;
-	sf::VideoMode videoMode(static_cast<unsigned int>(_windowWidth), static_cast<unsigned int>(_windowHeight));
-	if (_isFullscreen) {
-		videoMode = videoMode.getDesktopMode();
-		windowStyle = sf::Style::Fullscreen;
-	};
-	_window = std::make_unique<sf::RenderWindow>(videoMode, gameName, windowStyle);
-	_window->setVerticalSyncEnabled(_enable_vsync);	
-	_window->setMouseCursorVisible(true);
-	_isMovingCamera = false;
-}
-
 std::string Game::composeGameTimeString() {
 	std::string timeString;
 	unsigned int year = _gameTime / 12;
@@ -173,11 +162,34 @@ std::string Game::composeGameTimeString() {
 	return timeString;
 }
 
+void Game::onUISelectBuilding(BuildingTypeId buildingID) {
+	_logger->trace("Game::onUISelectBuilding called with id {}", std::underlying_type<WaresTypeId>::type(buildingID));
+	BuildingSpecification bs = _assetRegistry->getBuildingSpecification(buildingID);
+	_mouseState = MouseState::BuildingPlacement;
+	_selectedForBuilding = buildingID;
+	_mouseSprite.setTexture(*bs.icon, true);
+}
+
+void Game::_initRenderSystem() {
+	// Init render window
+	int windowStyle = sf::Style::Default;
+	sf::VideoMode videoMode(static_cast<unsigned int>(_windowWidth), static_cast<unsigned int>(_windowHeight));
+	if (_isFullscreen) {
+		videoMode = videoMode.getDesktopMode();
+		windowStyle = sf::Style::Fullscreen;
+	};
+	_window = std::make_unique<sf::RenderWindow>(videoMode, gameName, windowStyle);
+	_window->setVerticalSyncEnabled(_enable_vsync);
+	_window->setMouseCursorVisible(false);
+	_window->setKeyRepeatEnabled(false);
+	_isMovingCamera = false;
+}
+
 void Game::_initSettlementGoods() {
-	for (WaresTypeId gti = WaresTypeId::_Begin; gti != WaresTypeId::_End; gti = static_cast<WaresTypeId>(std::underlying_type<WaresTypeId>::type(gti) + 1)) {
+	for (WaresTypeId gti = WaresTypeId::_First; gti <= WaresTypeId::_Last; gti = static_cast<WaresTypeId>(std::underlying_type<WaresTypeId>::type(gti) + 1)) {
 		WaresStack stack;
 		stack.type = gti;
-		stack.amount = 0;
+		stack.amount = 10;
 		_settlementWares.push_back(std::move(stack));
 	}
 }
@@ -211,9 +223,27 @@ void Game::_processEvents(sf::Event event) {
 				_currentGameMonthDuration = gameMonthDurationNormal;
 				break;
 			}
+			case sf::Keyboard::Space:
+				_world->emit<ShowNaturalResourcesEvent>({ true });
+				break;
 			break;
 		}
+		break;
+	case sf::Event::KeyReleased:
+		switch (event.key.code) {
+		case sf::Keyboard::Space:
+			_world->emit<ShowNaturalResourcesEvent>({ false });
+			break;
+		}
+		break;
 	case sf::Event::MouseMoved:
+		_mouseSprite.setPosition(_window->mapPixelToCoords(
+			sf::Vector2i(
+				(int)(sf::Mouse::getPosition(*_window).x - _mouseSprite.getTexture()->getSize().x * 0.5f),
+				(int)(sf::Mouse::getPosition(*_window).y - _mouseSprite.getTexture()->getSize().y * 0.5f)
+			)
+		));
+		_world->emit<MouseMovedEvent>({ true });
 		if (_isMovingCamera) {
 			_world->emit<MoveCameraEvent>({
 				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
@@ -221,7 +251,6 @@ void Game::_processEvents(sf::Event event) {
 			});
 			_prevMouseCoords = sf::Mouse::getPosition(*_window);
 		}
-		_getMousePositionString(_mousePositionString);
 		break;
 	case sf::Event::MouseWheelMoved:
 		if (event.mouseWheel.delta < 0) {
@@ -242,12 +271,14 @@ void Game::_processEvents(sf::Event event) {
 		}
 		break;
 	case sf::Event::MouseButtonReleased:
-		if (event.mouseButton.button == sf::Mouse::Right) {
-			_isMovingCamera = false;
-		};
 		if (event.mouseButton.button == sf::Mouse::Left) {
+			_placeBuilding();
 			//_showTerrainInfo();
 		}
+		if (event.mouseButton.button == sf::Mouse::Right) {
+			_isMovingCamera = false;
+			_setMouseCursorNormal();
+		};
 		break;
 	}
 
@@ -262,13 +293,6 @@ void Game::_processInput(const sf::Time& frameTime) {
 	else {
 		_cameraMoveIntervalCooldown = cameraMoveInterval;
 		canMoveCamera = true;
-	}
-	// Keyboard state processing
-	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space)) {
-		//_assetRegistry->getMap(_curMapName).setWaresVisibility(true);
-	}
-	else {
-		//_assetRegistry->getMap(_curMapName).setWaresVisibility(false);
 	}
 	if (canMoveCamera) {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::A)) {
@@ -289,8 +313,7 @@ void Game::_processInput(const sf::Time& frameTime) {
 void Game::_update(const sf::Time& frameTime) {
 	// Update status string
 	_fps = static_cast<int>(1.0f / frameTime.asSeconds());
-	_statusString = _mousePositionString;
-	_statusString += " FPS: ";
+	_statusString = " FPS: ";
 	_statusString += std::to_string(_fps);
 
 	// Update game time
@@ -308,32 +331,82 @@ void Game::_update(const sf::Time& frameTime) {
 
 void Game::_draw() {
 	_window->clear();
-
 	// Render map
-	sf::Vector2f mouseScreenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	sf::Vector2f mouseMapCoords = mouseScreenCoords;
-	_world->emit<ConvertScreenToMapCoordsEvent>({ mouseMapCoords });
-	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
-		// Highlight tile, if it lies under mouse cursor
-		tile->sprite.setColor(sf::Color::White);
-		if (static_cast<int>(mouseMapCoords.x) == tile->x && static_cast<int>(mouseMapCoords.y) == tile->y) {
-			tile->sprite.setColor(sf::Color(255, 255, 255, 127));
-		}
-		// Draw tile
-		getRenderWindow().draw(tile->sprite);
-	});
-
+	_world->emit<RenderMapEvent>({ true });
 	// Render UI
 	_ui->render();
-
+	// Render mouse cursor
+	if (_mouseState == MouseState::BuildingPlacement) {
+		auto ent = _world->getById(_getEntityIDUnderCursor());
+		if (ent && _settlementHasWaresForBuilding(_assetRegistry->getBuildingSpecification(_selectedForBuilding)) && _requiredNatresPresentOnTile(ent, _selectedForBuilding)) {
+			_mouseSprite.setColor(sf::Color(255, 255, 255, 127));
+		}
+		else {
+			_mouseSprite.setColor(sf::Color(255, 0, 0, 127));
+		}
+	}
+	_window->draw(_mouseSprite);
 	// Show everything on screen
 	_window->display();
 }
 
-void Game::_getMousePositionString(std::string& str) {
-	sf::Vector2f mouseScreenCoords = _window->mapPixelToCoords(sf::Mouse::getPosition(*_window));
-	sf::Vector2f mouseMapCoords = mouseScreenCoords;
-	_world->emit<ConvertScreenToMapCoordsEvent>({ mouseMapCoords });
-	str = "Screen X: " + std::to_string(mouseScreenCoords.x) + " Y: " + std::to_string(mouseScreenCoords.y) + "; ";
-	str += "World X:" + std::to_string(mouseMapCoords.x) + " Y: " + std::to_string(mouseMapCoords.y) + "; ";
+void Game::_setMouseCursorNormal() {
+	_mouseSprite.setTexture(*_assetRegistry->getTexture("mouse_cursor_normal"), true);
+	_mouseSprite.setPosition(_window->mapPixelToCoords(sf::Mouse::getPosition(*_window)));
+	_mouseSprite.setColor(sf::Color::White);
+	_mouseState = MouseState::Normal;
+}
+
+bool Game::_settlementHasWaresForBuilding(const BuildingSpecification& bs) {
+	for (auto& settWare : _settlementWares) {
+		for (auto& requiredWare : bs.waresRequired) {
+			if (settWare.type == requiredWare.type) {
+				if (settWare.amount < requiredWare.amount) return false;
+			}
+		}
+	}
+	return true;
+}
+
+bool Game::_requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID) {
+	auto natres = ent->get<NaturalResourceComponent>();
+	uint32_t resourseSet = 0;
+	if (natres) {
+		resourseSet = natres->resourceSet;
+	}
+	if (resourseSet == 0) return false;
+	NaturalResourceTypeId natresRequired = _assetRegistry->getBuildingSpecification(buildingID).natresRequired;
+	if (natresRequired == NaturalResourceTypeId::Unknown) return true;
+	if (NaturalResourceTypeId(resourseSet & 0x000000FF) != natresRequired) return false;
+	return true;
+}
+
+void Game::_placeBuilding() {
+	if (_mouseState != MouseState::BuildingPlacement) return;
+	const BuildingSpecification& bs = _assetRegistry->getBuildingSpecification(_selectedForBuilding);
+	if (!_settlementHasWaresForBuilding(bs)) return;
+	if (_getEntityIDUnderCursor() == 0) return;
+	auto ent = _world->getById(_getEntityIDUnderCursor());
+	if (!ent) return;
+	if (!_requiredNatresPresentOnTile(ent, _selectedForBuilding)) return;
+	ComponentHandle<TileComponent> tile = ent->get<TileComponent>();
+	tile->sprite.setTexture(*bs.icon, true);
+	sf::Vector2f pos = tile->sprite.getPosition();
+	pos.y += (float)tile->rising - (float)bs.tileRising;
+	tile->sprite.setPosition(pos);
+	tile->rising = bs.tileRising;
+	for (auto& settWare : _settlementWares) {
+		for (auto& requiredWare : bs.waresRequired) {
+			if (settWare.type == requiredWare.type) {
+				settWare.amount -= requiredWare.amount;
+			}
+		}
+	}
+	_setMouseCursorNormal();
+}
+
+size_t Game::_getEntityIDUnderCursor() {
+	size_t entityID;
+	_world->emit<RequestHighlightedEntityEvent>({ entityID });
+	return entityID;
 }

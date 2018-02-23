@@ -18,13 +18,6 @@ void AssetRegistry::loadTexture(const std::string& assetName, const std::string&
 	spdlog::get(loggerName)->trace("Texture atlas contains {} textures", _textureAtlas.size());
 }
 
-//void AssetRegistry::loadMap(const std::string& assetName, const std::string& filename, World* world) {
-//	Archipelago::Map map(*this);
-//	map.loadFromFile(filename, world);
-//	_mapAtlas.insert(std::pair<std::string, Archipelago::Map>(assetName, std::move(map)));
-//	spdlog::get(loggerName)->trace("Loaded map '{}' from file '{}'", assetName, filename);
-//}
-
 sf::Texture* AssetRegistry::getTexture(const std::string& textureName) {
 	auto m = _textureAtlas.find(textureName);
 	if (m != _textureAtlas.end()) {
@@ -35,16 +28,6 @@ sf::Texture* AssetRegistry::getTexture(const std::string& textureName) {
 	return nullptr;
 }
 
-//Archipelago::Map& AssetRegistry::getMap(const std::string& mapName) {
-//	auto m = _mapAtlas.find(mapName);
-//	if (m != _mapAtlas.end()) {
-//		return m->second;
-//	}
-//	std::string s("Map '" + mapName + "' not found in registry");
-//	spdlog::get(loggerName)->error(s);
-//	throw std::out_of_range(s);
-//}
-
 void AssetRegistry::prepareWaresAtlas() {
 	spdlog::get(loggerName)->trace("AssetRegistry::prepareWaresAtlas started...");
 	std::string filename("assets/wares_specification.json");
@@ -52,7 +35,7 @@ void AssetRegistry::prepareWaresAtlas() {
 	std::fstream waresSpecFile;
 	waresSpecFile.open(filename);
 	if (waresSpecFile.fail()) {
-		spdlog::get(loggerName)->error("AssetRegistry::prepareWaresAtlas failed. Error opening wares specification file '{}'", filename);
+		spdlog::get(loggerName)->error("AssetRegistry::prepareWaresAtlas failed. Error opening specification file '{}'", filename);
 		return;
 	}
 	waresSpecFile >> waresSpecJSON;
@@ -63,7 +46,7 @@ void AssetRegistry::prepareWaresAtlas() {
 			gs.name = std::move(waresSpec.at("name").get<std::string>());
 			loadTexture(waresSpec.at("name"), waresSpec.at("icon"));
 			gs.icon = getTexture(waresSpec.at("name"));
-			_waresAtlas.insert(std::pair<WaresTypeId, Archipelago::WaresSpecification>(static_cast<WaresTypeId>(waresSpec.at("id").get<int>()), std::move(gs)));
+			_wareAtlas.insert(std::pair<WaresTypeId, Archipelago::WaresSpecification>(static_cast<WaresTypeId>(waresSpec.at("id").get<int>()), std::move(gs)));
 			spdlog::get(loggerName)->trace("Wares Specification loaded: '{}'", (waresSpec.at("name")).get<std::string>());
 		}
 	}
@@ -71,5 +54,78 @@ void AssetRegistry::prepareWaresAtlas() {
 		spdlog::get(loggerName)->error("AssetRegistry::prepareWaresAtlas: Can't parse wares specifications: {}", e.what());
 		exit(-1);
 	}
-	spdlog::get(loggerName)->trace("Wares atlas contains {} wares specifications", _waresAtlas.size());
+	spdlog::get(loggerName)->trace("Wares atlas contains {} wares specifications", _wareAtlas.size());
+}
+
+void AssetRegistry::prepareNaturalResourcesAtlas() {
+	spdlog::get(loggerName)->trace("AssetRegistry::prepareNaturalResourcesAtlas started...");
+	std::string filename("assets/natural_resources_specification.json");
+	nlohmann::json natresSpecJSON;
+	std::fstream natresSpecFile;
+	natresSpecFile.open(filename);
+	if (natresSpecFile.fail()) {
+		spdlog::get(loggerName)->error("AssetRegistry::prepareNaturalResourcesAtlas failed. Error opening specification file '{}'", filename);
+		return;
+	}
+	natresSpecFile >> natresSpecJSON;
+	natresSpecFile.close();
+	try {
+		for (auto natresSpec : natresSpecJSON) {
+			NaturalResourceSpecification nrs;
+			nrs.name = std::move(natresSpec.at("name").get<std::string>());
+			loadTexture(natresSpec.at("name"), natresSpec.at("icon"));
+			nrs.icon = getTexture(natresSpec.at("name"));
+			_natresAtlas.insert(std::pair<NaturalResourceTypeId, Archipelago::NaturalResourceSpecification>(static_cast<NaturalResourceTypeId>(natresSpec.at("id").get<int>()), std::move(nrs)));
+			spdlog::get(loggerName)->trace("Natural resources specification loaded: '{}'", (natresSpec.at("name")).get<std::string>());
+		}
+	}
+	catch (std::out_of_range& e) {
+		spdlog::get(loggerName)->error("AssetRegistry::prepareNaturalResourcesAtlas: Can't parse natural resources specifications: {}", e.what());
+		exit(-1);
+	}
+	spdlog::get(loggerName)->trace("Natural resources atlas contains {} natural resources specifications", _natresAtlas.size());
+}
+
+void AssetRegistry::prepareBuildingAtlas() {
+	spdlog::get(loggerName)->trace("AssetRegistry::prepareBuildingAtlas started...");
+	std::string filename("assets/buildings_specification.json");
+	nlohmann::json buildingSpecJSON;
+	std::fstream buildingSpecFile;
+	buildingSpecFile.open(filename);
+	if (buildingSpecFile.fail()) {
+		spdlog::get(loggerName)->error("AssetRegistry::prepareBuildingAtlas failed. Error opening specification file '{}'", filename);
+		return;
+	}
+	buildingSpecFile >> buildingSpecJSON;
+	buildingSpecFile.close();
+	try {
+		for (auto buildingSpec : buildingSpecJSON) {
+			BuildingSpecification bs;
+			bs.name = std::move(buildingSpec.at("name").get<std::string>());
+			bs.description = std::move(buildingSpec.at("description").get<std::string>());
+			loadTexture(buildingSpec.at("name"), buildingSpec.at("icon"));
+			bs.icon = getTexture(buildingSpec.at("name"));
+			bs.tileRising = buildingSpec.at("tile_rising");
+			bs.natresRequired = static_cast<NaturalResourceTypeId>(buildingSpec.at("natres_required").get<int>());
+			for (auto wareReq : buildingSpec.at("wares_required")) {
+				WaresStack ws;
+				ws.type = static_cast<WaresTypeId>(wareReq.at("type").get<int>());
+				ws.amount = wareReq.at("type").get<int>();
+				bs.waresRequired.push_back(ws);
+			}
+			std::vector<int> briv = std::move(buildingSpec.at("building_required").get<std::vector<int>>());
+			for (auto br : briv) {
+				bs.buildingRequired.push_back(static_cast<BuildingTypeId>(br));
+			}
+			bs.productionType = static_cast<WaresTypeId>(buildingSpec.at("production_type").get<int>());
+			bs.productionAmountPerMonth = buildingSpec.at("production_amount").get<unsigned int>();
+			_buildingAtlas.insert(std::pair<BuildingTypeId, Archipelago::BuildingSpecification>(static_cast<BuildingTypeId>(buildingSpec.at("id").get<int>()), std::move(bs)));
+			spdlog::get(loggerName)->trace("Building specification loaded: '{}'", (buildingSpec.at("name")).get<std::string>());
+		}
+	}
+	catch (std::out_of_range& e) {
+		spdlog::get(loggerName)->error("AssetRegistry::prepareBuildingAtlas: Can't parse building specifications: {}", e.what());
+		exit(-1);
+	}
+	spdlog::get(loggerName)->trace("Natural resources atlas contains {} building specifications", _natresAtlas.size());
 }

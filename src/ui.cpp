@@ -61,12 +61,16 @@ Ui::Ui(Game& game): _game(game)
 		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
 		buildingBox->Pack(sfg::Label::Create("Base camp"), false);
 	}
+	Game* gamePtr = &_game;
+	buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr] {gamePtr->onUISelectBuilding(BuildingTypeId::BaseCamp); });
+
 	buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
 	buildBox->Pack(buildingBox, false);
 	if (buildingIconImg.loadFromFile("assets/textures/building_woodcutter_1.png")) {
 		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
 		buildingBox->Pack(sfg::Label::Create("Woodcutter"), false);
 	}
+	buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr] {gamePtr->onUISelectBuilding(BuildingTypeId::Woodcutter); });
 
 	auto infoBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
 	mainNotebook->AppendPage(buildBox, sfg::Label::Create("Build"));

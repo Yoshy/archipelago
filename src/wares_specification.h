@@ -7,7 +7,7 @@ class sf::Texture;
 
 namespace Archipelago {
 
-	enum class WaresTypeId { Unknown = 0, People = 1, FreshWater = 2, SaltWater = 3, Crops = 4, Wood = 5, _End, _Begin = People };
+	enum class WaresTypeId { Unknown = 0, People = 1, FreshWater = 2, SaltWater = 3, Crops = 4, Wood = 5, _Last = Wood, _First = People };
 
 	struct WaresSpecification {
 		std::string name;

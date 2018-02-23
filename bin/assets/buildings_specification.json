@@ -2,34 +2,51 @@
 	{
 		"id": 1,
 		"name": "Base camp",
-		"description": "Base camp is the first building. It gives some resources to begin development of your settlement. May be placed on any tile, except mountains",
-		"icon": [
-			"assets/textures/building_base_camp_1.png",
+		"description": "Base camp is the first building. It gives permanent population increase. May be placed on any tile, except mountains",
+		"icon": "assets/textures/building_base_camp_1.png",
+		"tile_rising": 0,
+		"natres_required": 0,
+		"wares_required": [
+			{
+				"type": 1,
+				"amount": 1
+			},
+			{
+				"type": 2,
+				"amount": 5
+			},
+			{
+				"type": 4,
+				"amount": 5
+			},
+			{
+				"type": 5,
+				"amount": 5
+			}
 		],
-		"cost": [
-		],
-		"occupation": -5,
-		"provides_wares": [
-			{ "Wood": 5 }
-		],
-		"production": [
-		]
+		"building_required": [],
+		"production_type": 1,
+		"production_amount": 1
 	},
 	{
 		"id": 2,
 		"name": "Woodcutter",
-		"description": "The Woodcutter produces 1 wood per month. Must be placed on a tile with wood",
-		"icon": [
-			"assets/textures/building_woodcutter_1.png",
+		"description": "The Woodcutter produces 1 wood per month. Must be placed on a tile with forest",
+		"icon": "assets/textures/building_woodcutter_1.png",
+		"tile_rising": 3,
+		"natres_required": 2,
+		"wares_required": [
+			{
+				"type": 1,
+				"amount": 1
+			},
+			{
+				"type": 5,
+				"amount": 5
+			}
 		],
-		"cost": [
-			{ "Wood": 5 }
-		],
-		"occupation": 1,
-		"provides_wares": [
-		],
-		"production": [
-			{ "Wood": 1 },
-		]
+		"building_required": [ 1 ],
+		"production_type": 5,
+		"production_amount": 1
 	}
 ]
