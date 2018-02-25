@@ -2,14 +2,16 @@
 	{
 		"id": 1,
 		"name": "Base camp",
-		"description": "Base camp is the first building. It gives permanent population increase. May be placed on any tile, except mountains",
+		"description": "Base camp is the first building. It gives some initial resources. May be placed on flatlands tile",
 		"icon": "assets/textures/building_base_camp_1.png",
 		"tile_rising": 0,
-		"natres_required": 0,
-		"wares_required": [
+		"natres_required": 1,
+		"wares_required": [],
+		"building_required": [],
+		"provided_instant_wares": [
 			{
 				"type": 1,
-				"amount": 1
+				"amount": 5
 			},
 			{
 				"type": 2,
@@ -24,9 +26,8 @@
 				"amount": 5
 			}
 		],
-		"building_required": [],
-		"production_type": 1,
-		"production_amount": 1
+		"production_type": 0,
+		"production_amount": 0
 	},
 	{
 		"id": 2,
@@ -42,11 +43,34 @@
 			},
 			{
 				"type": 5,
-				"amount": 5
+				"amount": 2
 			}
 		],
 		"building_required": [ 1 ],
+		"provided_instant_wares": [],
 		"production_type": 5,
+		"production_amount": 1
+	},
+	{
+		"id": 3,
+		"name": "Farm",
+		"description": "Farm grow crops. May be placed on flatlands tile",
+		"icon": "assets/textures/building_farm_1.png",
+		"tile_rising": 6,
+		"natres_required": 1,
+		"wares_required": [
+			{
+				"type": 1,
+				"amount": 1
+			},
+			{
+				"type": 5,
+				"amount": 2
+			}
+		],
+		"building_required": [],
+		"provided_instant_wares": [],
+		"production_type": 4,
 		"production_amount": 1
 	}
 ]

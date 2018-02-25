@@ -110,12 +110,18 @@ void AssetRegistry::prepareBuildingAtlas() {
 			for (auto wareReq : buildingSpec.at("wares_required")) {
 				WaresStack ws;
 				ws.type = static_cast<WaresTypeId>(wareReq.at("type").get<int>());
-				ws.amount = wareReq.at("type").get<int>();
+				ws.amount = wareReq.at("amount").get<int>();
 				bs.waresRequired.push_back(ws);
 			}
 			std::vector<int> briv = std::move(buildingSpec.at("building_required").get<std::vector<int>>());
 			for (auto br : briv) {
 				bs.buildingRequired.push_back(static_cast<BuildingTypeId>(br));
+			}
+			for (auto providedInstantWare : buildingSpec.at("provided_instant_wares")) {
+				WaresStack ws;
+				ws.type = static_cast<WaresTypeId>(providedInstantWare.at("type").get<int>());
+				ws.amount = providedInstantWare.at("amount").get<int>();
+				bs.providedInstantWares.push_back(ws);
 			}
 			bs.productionType = static_cast<WaresTypeId>(buildingSpec.at("production_type").get<int>());
 			bs.productionAmountPerMonth = buildingSpec.at("production_amount").get<unsigned int>();

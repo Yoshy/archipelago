@@ -16,67 +16,10 @@ Ui::Ui(Game& game): _game(game)
 {
 	_sfgui = std::make_unique<sfg::SFGUI>();
 	_uiDesktop = std::make_unique<sfg::Desktop>();
-
-	_uiTopStatusBar = sfg::Window::Create();
-	_uiTopStatusBar->SetStyle(sfg::Window::BACKGROUND);
-	auto currentGameTimeLabel = sfg::Label::Create();
-	currentGameTimeLabel->SetId(ui_TopStatusBar_TimeLabelId);
-	_uiDesktop->Add(_uiTopStatusBar);
-	auto mainBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
-	auto waresBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
-	waresBox->SetSpacing(10.0f);
-	for (unsigned int wareIndex = 0; wareIndex < _game.getSettlementWaresNumber(); wareIndex++) {
-		auto wareIcon = sfg::Image::Create(_game.getWareIcon(wareIndex));
-		auto waresAmountText = sfg::Label::Create(std::to_string(_game.getWareAmount(wareIndex)));
-		auto spacer = sfg::Label::Create("  ");
-		waresAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
-		waresAmountText->SetId(ui_TopStatusBar_GoodsLabelId + std::to_string(wareIndex));
-		waresBox->Pack(wareIcon, false, true);
-		waresBox->Pack(waresAmountText, false, true);
-		waresBox->Pack(spacer, false, true);
-	}
-	mainBox->Pack(waresBox);
-	mainBox->Pack(currentGameTimeLabel);
-	_uiTopStatusBar->Add(mainBox);
-
-	_uiBottomStatusBar = sfg::Window::Create();
-	_uiBottomStatusBar->SetStyle(sfg::Window::BACKGROUND);
-	auto _uiBottomStatusBarLabel = sfg::Label::Create();
-	_uiBottomStatusBarLabel->SetId(ui_BottomStatusBar_LabelId);
-	_uiBottomStatusBar->Add(_uiBottomStatusBarLabel);
-	_uiDesktop->Add(_uiBottomStatusBar);
-
-	_uiMainInterfaceWindow = sfg::Window::Create();
-	_uiMainInterfaceWindow->Show(true);
-	_uiMainInterfaceWindow->SetStyle(sfg::Window::BACKGROUND);
-	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
-	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
-	auto mainNotebook = sfg::Notebook::Create();
-	auto buildBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 10.0f);
-
-	sf::Image buildingIconImg;
-	auto buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
-	buildBox->Pack(buildingBox, false);
-	if (buildingIconImg.loadFromFile("assets/textures/building_base_camp_1.png")) {
-		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
-		buildingBox->Pack(sfg::Label::Create("Base camp"), false);
-	}
-	Game* gamePtr = &_game;
-	buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr] {gamePtr->onUISelectBuilding(BuildingTypeId::BaseCamp); });
-
-	buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
-	buildBox->Pack(buildingBox, false);
-	if (buildingIconImg.loadFromFile("assets/textures/building_woodcutter_1.png")) {
-		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
-		buildingBox->Pack(sfg::Label::Create("Woodcutter"), false);
-	}
-	buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr] {gamePtr->onUISelectBuilding(BuildingTypeId::Woodcutter); });
-
-	auto infoBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
-	mainNotebook->AppendPage(buildBox, sfg::Label::Create("Build"));
-	mainNotebook->AppendPage(infoBox, sfg::Label::Create("Info"));
-	_uiMainInterfaceWindow->Add(mainNotebook);
-	_uiDesktop->Add(_uiMainInterfaceWindow);
+	_constructTopStatusBar();
+	_constructBottomStatusBar();
+	_constructMainInterfaceWindow();
+	_constructTerrainInfoWindow();
 	resizeUi(_game.getRenderWindowWidth(), _game.getRenderWindowHeight());
 }
 
@@ -119,3 +62,84 @@ void Ui::resizeUi(float width, float height)
 	v.setSize(width, height);
 	_game.getRenderWindow().setView(v);
 };
+
+void Ui::showTerrainInfoWindow(sf::Vector2f position, TileComponent& tile) {
+	_uiTerrainInfoWindow->SetPosition(position);
+	_uiTerrainInfoWindow->Show(true);
+}
+
+void Ui::hideTerrainInfoWindow() {
+	_uiTerrainInfoWindow->Show(false);
+}
+
+void Ui::_constructTopStatusBar() {
+	_uiTopStatusBar = sfg::Window::Create();
+	_uiTopStatusBar->SetStyle(sfg::Window::BACKGROUND);
+	auto currentGameTimeLabel = sfg::Label::Create();
+	currentGameTimeLabel->SetId(ui_TopStatusBar_TimeLabelId);
+	auto mainBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
+	auto waresBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
+	waresBox->SetSpacing(10.0f);
+	for (unsigned int wareIndex = 0; wareIndex < _game.getSettlementWaresNumber(); wareIndex++) {
+		auto wareIcon = sfg::Image::Create(_game.getWareIcon(wareIndex));
+		auto waresAmountText = sfg::Label::Create(std::to_string(_game.getWareAmount(wareIndex)));
+		auto spacer = sfg::Label::Create("  ");
+		waresAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
+		waresAmountText->SetId(ui_TopStatusBar_GoodsLabelId + std::to_string(wareIndex));
+		waresBox->Pack(wareIcon, false, true);
+		waresBox->Pack(waresAmountText, false, true);
+		waresBox->Pack(spacer, false, true);
+	}
+	mainBox->Pack(waresBox);
+	mainBox->Pack(currentGameTimeLabel);
+	_uiTopStatusBar->Add(mainBox);
+	_uiDesktop->Add(_uiTopStatusBar);
+}
+
+void Ui::_constructBottomStatusBar() {
+	_uiBottomStatusBar = sfg::Window::Create();
+	_uiBottomStatusBar->SetStyle(sfg::Window::BACKGROUND);
+	auto _uiBottomStatusBarLabel = sfg::Label::Create();
+	_uiBottomStatusBarLabel->SetId(ui_BottomStatusBar_LabelId);
+	_uiBottomStatusBar->Add(_uiBottomStatusBarLabel);
+	_uiDesktop->Add(_uiBottomStatusBar);
+}
+
+void Ui::_constructMainInterfaceWindow() {
+	_uiMainInterfaceWindow = sfg::Window::Create();
+	_uiMainInterfaceWindow->Show(true);
+	_uiMainInterfaceWindow->SetStyle(sfg::Window::BACKGROUND);
+	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
+	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
+	auto buildBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 10.0f);
+
+	sf::Image buildingIconImg;
+	std::shared_ptr<sfg::Box> buildingBox;
+	Game* gamePtr = &_game;
+	BuildingSpecification bs;
+	for (BuildingTypeId bldId = BuildingTypeId::_First; bldId <= BuildingTypeId::_Last; bldId = static_cast<BuildingTypeId>(std::underlying_type<BuildingTypeId>::type(bldId) + 1)) {
+		bs = gamePtr->getAssetRegistry().getBuildingSpecification(bldId);
+		buildingIconImg = bs.icon->copyToImage();
+		buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
+		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
+		buildingBox->Pack(sfg::Label::Create(bs.name), false);
+		buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr, bldId] {gamePtr->onUISelectBuilding(bldId); });
+		buildBox->Pack(buildingBox, false);
+	}
+
+	auto infoBox = sfg::Box::Create(sfg::Box::Orientation::VERTICAL);
+
+	auto mainNotebook = sfg::Notebook::Create();
+	mainNotebook->AppendPage(buildBox, sfg::Label::Create("Build"));
+	mainNotebook->AppendPage(infoBox, sfg::Label::Create("Info"));
+	_uiMainInterfaceWindow->Add(mainNotebook);
+	_uiDesktop->Add(_uiMainInterfaceWindow);
+}
+
+void Ui::_constructTerrainInfoWindow() {
+	_uiTerrainInfoWindow = sfg::Window::Create(sfg::Window::BACKGROUND | sfg::Window::TITLEBAR);
+	_uiTerrainInfoWindow->SetTitle("Terrain info");
+	_uiTerrainInfoWindow->SetRequisition({ 100.0f, 0.0f });
+	_uiTerrainInfoWindow->Show(false);
+	_uiDesktop->Add(_uiTerrainInfoWindow);
+}

@@ -14,6 +14,7 @@ namespace Archipelago {
 	extern const std::string& loggerName{ gameName + "_logger" };
 	const std::string& mapFileName{ "assets/maps/default_map.json" };
 	const size_t stringReservationSize{ 100 };
+	const int terrainInfoShowInterval{ 500 }; /// if no mouse movement within interval, then show terrain info window										  
 	// Time constants
 	const unsigned int gameMonthDurationNormal{ 30 };
 	const unsigned int gameMonthDurationFast{ 10 };
@@ -91,6 +92,7 @@ void Game::init() {
 	// Init game variables
 	_statusString.reserve(stringReservationSize);
 	_cameraMoveIntervalCooldown = cameraMoveInterval;
+	_terrainInfoWindowShowCooldown = 0;
 	_mouseState = MouseState::Normal;
 
 	// Init game subsystems
@@ -189,22 +191,24 @@ void Game::_initSettlementGoods() {
 	for (WaresTypeId gti = WaresTypeId::_First; gti <= WaresTypeId::_Last; gti = static_cast<WaresTypeId>(std::underlying_type<WaresTypeId>::type(gti) + 1)) {
 		WaresStack stack;
 		stack.type = gti;
-		stack.amount = 10;
+		stack.amount = 0;
 		_settlementWares.push_back(std::move(stack));
 	}
 }
 
 void Game::_processEvents(sf::Event event) {
 	switch (event.type) {
-	case sf::Event::Resized:
+	case sf::Event::Resized: {
 		_ui->resizeUi(static_cast<float>(event.size.width), static_cast<float>(event.size.height));
-		break;
-	case sf::Event::KeyPressed:
+	}
+	break;
+	case sf::Event::KeyPressed: {
 		switch (event.key.code) {
-		case sf::Keyboard::Escape:
+		case sf::Keyboard::Escape: {
 			_window->close();
-			break;
-		case sf::Keyboard::Add:
+		}
+		break;
+		case sf::Keyboard::Add: {
 			switch (_currentGameMonthDuration) {
 			case gameMonthDurationNormal:
 				_currentGameMonthDuration = gameMonthDurationFast;
@@ -213,8 +217,9 @@ void Game::_processEvents(sf::Event event) {
 				_currentGameMonthDuration = gameMonthDurationSuperFast;
 				break;
 			}
-			break;
-		case sf::Keyboard::Subtract:
+		}
+		break;
+		case sf::Keyboard::Subtract: {
 			switch (_currentGameMonthDuration) {
 			case gameMonthDurationSuperFast:
 				_currentGameMonthDuration = gameMonthDurationFast;
@@ -223,36 +228,30 @@ void Game::_processEvents(sf::Event event) {
 				_currentGameMonthDuration = gameMonthDurationNormal;
 				break;
 			}
-			case sf::Keyboard::Space:
-				_world->emit<ShowNaturalResourcesEvent>({ true });
-				break;
-			break;
 		}
 		break;
-	case sf::Event::KeyReleased:
+		case sf::Keyboard::Space: {
+			_world->emit<ShowNaturalResourcesEvent>({ true });
+		}
+		break;
+		}
+	}
+	break;
+	case sf::Event::KeyReleased: {
 		switch (event.key.code) {
 		case sf::Keyboard::Space:
 			_world->emit<ShowNaturalResourcesEvent>({ false });
-			break;
-		}
 		break;
-	case sf::Event::MouseMoved:
-		_mouseSprite.setPosition(_window->mapPixelToCoords(
-			sf::Vector2i(
-				(int)(sf::Mouse::getPosition(*_window).x - _mouseSprite.getTexture()->getSize().x * 0.5f),
-				(int)(sf::Mouse::getPosition(*_window).y - _mouseSprite.getTexture()->getSize().y * 0.5f)
-			)
-		));
-		_world->emit<MouseMovedEvent>({ true });
-		if (_isMovingCamera) {
-			_world->emit<MoveCameraEvent>({
-				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
-				static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).y)
-			});
-			_prevMouseCoords = sf::Mouse::getPosition(*_window);
 		}
-		break;
-	case sf::Event::MouseWheelMoved:
+	}
+	break;
+	case sf::Event::MouseMoved: {
+		_processMouseMovement();
+		_hideTerrainInfoWindow();
+		_terrainInfoWindowShowCooldown = 0;
+	}
+	break;
+	case sf::Event::MouseWheelMoved: {
 		if (event.mouseWheel.delta < 0) {
 			_world->emit<ZoomCameraEvent>({ 1.5f });
 		}
@@ -260,28 +259,35 @@ void Game::_processEvents(sf::Event event) {
 		{
 			_world->emit<ZoomCameraEvent>({ 0.5f });
 		}
-		break;
-	case sf::Event::Closed:
+	}
+	break;
+	case sf::Event::Closed: {
 		_window->close();
-		break;
-	case sf::Event::MouseButtonPressed:
+	}
+	break;
+	case sf::Event::MouseButtonPressed: {
 		if (event.mouseButton.button == sf::Mouse::Right) {
 			_isMovingCamera = true;
 			_prevMouseCoords = sf::Mouse::getPosition(*_window);
 		}
-		break;
-	case sf::Event::MouseButtonReleased:
+	}
+	break;
+	case sf::Event::MouseButtonReleased: {
 		if (event.mouseButton.button == sf::Mouse::Left) {
-			_placeBuilding();
-			//_showTerrainInfo();
+			if (_mouseState == MouseState::BuildingPlacement) {
+				_placeBuilding();
+			};
+			if (_mouseState == MouseState::Normal) {
+				_showTerrainInfoWindow();
+			}			
 		}
 		if (event.mouseButton.button == sf::Mouse::Right) {
 			_isMovingCamera = false;
 			_setMouseCursorNormal();
 		};
-		break;
 	}
-
+	break;
+	}
 }
 
 void Game::_processInput(const sf::Time& frameTime) {
@@ -307,6 +313,7 @@ void Game::_processInput(const sf::Time& frameTime) {
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::S)) {
 			_world->emit<MoveCameraEvent>({ 0.0f, cameraMoveStep });
 		}
+		_processMouseMovement();
 	}
 }
 
@@ -323,9 +330,14 @@ void Game::_update(const sf::Time& frameTime) {
 		_accumulatedTime = sf::Time::Zero;
 	}
 
+	_terrainInfoWindowShowCooldown += frameTime.asMilliseconds();
+
 	_world->tick(0);
 
 	// Update UI
+	if (_terrainInfoWindowShowCooldown > terrainInfoShowInterval) {
+		_showTerrainInfoWindow();
+	}
 	_ui->update(frameTime.asSeconds());
 }
 
@@ -355,6 +367,29 @@ void Game::_setMouseCursorNormal() {
 	_mouseSprite.setPosition(_window->mapPixelToCoords(sf::Mouse::getPosition(*_window)));
 	_mouseSprite.setColor(sf::Color::White);
 	_mouseState = MouseState::Normal;
+}
+
+void Game::_processMouseMovement() {
+	int cursorOffsetX{ 0 };
+	int cursorOffsetY{ 0 };
+	if (_mouseState == MouseState::BuildingPlacement) {
+		cursorOffsetX = -(int)(_mouseSprite.getTexture()->getSize().x * 0.5f);
+		cursorOffsetY = -(int)(_mouseSprite.getTexture()->getSize().y * 0.5f);
+	}
+	_mouseSprite.setPosition(_window->mapPixelToCoords(
+		sf::Vector2i(
+		(int)(sf::Mouse::getPosition(*_window).x + cursorOffsetX),
+			(int)(sf::Mouse::getPosition(*_window).y + cursorOffsetY)
+		)
+	));
+	_world->emit<MouseMovedEvent>({ true });
+	if (_isMovingCamera) {
+		_world->emit<MoveCameraEvent>({
+			static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).x),
+			static_cast<float>((_prevMouseCoords - sf::Mouse::getPosition(*_window)).y)
+		});
+		_prevMouseCoords = sf::Mouse::getPosition(*_window);
+	}
 }
 
 bool Game::_settlementHasWaresForBuilding(const BuildingSpecification& bs) {
@@ -401,6 +436,11 @@ void Game::_placeBuilding() {
 				settWare.amount -= requiredWare.amount;
 			}
 		}
+		for (auto& providedInstantWare : bs.providedInstantWares) {
+			if (settWare.type == providedInstantWare.type) {
+				settWare.amount += providedInstantWare.amount;
+			}
+		}
 	}
 	_setMouseCursorNormal();
 }
@@ -409,4 +449,14 @@ size_t Game::_getEntityIDUnderCursor() {
 	size_t entityID;
 	_world->emit<RequestHighlightedEntityEvent>({ entityID });
 	return entityID;
+}
+
+void Game::_showTerrainInfoWindow() {
+	size_t ent = _getEntityIDUnderCursor();
+	if (!ent) return;
+	_ui->showTerrainInfoWindow(sf::Vector2f(sf::Mouse::getPosition(*_window)) + sf::Vector2f((float)_mouseSprite.getTextureRect().width, 0.0f), _world->getById(ent)->get<TileComponent>().get());
+}
+
+void Game::_hideTerrainInfoWindow() {
+	_ui->hideTerrainInfoWindow();
 }

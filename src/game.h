@@ -43,10 +43,13 @@ namespace Archipelago {
 		void _update(const sf::Time& frameTime);
 		void _draw();
 		void _setMouseCursorNormal();
+		void _processMouseMovement();
 		bool _requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID);
 		bool _settlementHasWaresForBuilding(const BuildingSpecification& bs);
 		void _placeBuilding();
 		size_t _getEntityIDUnderCursor();
+		void _showTerrainInfoWindow();
+		void _hideTerrainInfoWindow();
 
 		// game posessions
 		std::shared_ptr<spdlog::logger> _logger;
@@ -69,10 +72,10 @@ namespace Archipelago {
 		BuildingTypeId _selectedForBuilding;
 		
 		// auxilary vars
-
 		std::string _statusString;
 		sf::Time _accumulatedTime{ sf::Time::Zero };
 		int _cameraMoveIntervalCooldown; // milliseconds
+		int _terrainInfoWindowShowCooldown;
 		unsigned int _numThreads;
 		unsigned int _fps;
 		bool _isMovingCamera;

@@ -9,9 +9,7 @@
 		{ "id": 2, "tileName": "forest", "texFileName": "assets/textures/default_map/forest.png", "tileRising": 8 },
 		{ "id": 3, "tileName": "mountains", "texFileName": "assets/textures/default_map/mountains.png", "tileRising": 9 },
 		{ "id": 4, "tileName": "lake", "texFileName": "assets/textures/default_map/lake.png", "tileRising": 0 },
-		{ "id": 5, "tileName": "ocean", "texFileName": "assets/textures/default_map/ocean.png", "tileRising": 0 },
-		{ "id": 6, "tileName": "camp", "texFileName": "assets/textures/building_base_camp_1.png", "tileRising": 0 },
-		{ "id": 7, "tileName": "woodcutter", "texFileName": "assets/textures/building_woodcutter_1.png", "tileRising": 3 }
+		{ "id": 5, "tileName": "ocean", "texFileName": "assets/textures/default_map/ocean.png", "tileRising": 0 }
 	],
 	"terrain_layer": [
 		3, 3, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,

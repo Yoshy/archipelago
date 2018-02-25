@@ -8,7 +8,7 @@ class sf::Texture;
 
 namespace Archipelago {
 
-	enum class BuildingTypeId { Unknown = 0, BaseCamp = 1, Woodcutter = 2, _Last = Woodcutter, _First = BaseCamp };
+	enum class BuildingTypeId { Unknown = 0, BaseCamp = 1, Woodcutter = 2, Farm = 3, _Last = Farm, _First = BaseCamp };
 
 	struct BuildingSpecification {
 		std::string name;
@@ -18,6 +18,7 @@ namespace Archipelago {
 		NaturalResourceTypeId natresRequired;
 		std::vector<WaresStack> waresRequired;
 		std::vector<BuildingTypeId> buildingRequired;
+		std::vector<WaresStack> providedInstantWares;
 		WaresTypeId productionType;
 		unsigned int productionAmountPerMonth;
 	};
