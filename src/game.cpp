@@ -29,13 +29,8 @@ using namespace Archipelago;
 using namespace spdlog;
 using namespace ECS;
 
-Game::Game(): _isFullscreen(true), _windowWidth(800), _windowHeight(600) {
-
-}
-
-Game::~Game() {
-
-}
+Game::Game(): _isFullscreen(true), _windowWidth(800), _windowHeight(600), _curCameraZoom(1.0f) {}
+Game::~Game() {}
 
 void Game::init() {
 	// Init logger
@@ -253,11 +248,12 @@ void Game::_processEvents(sf::Event event) {
 	break;
 	case sf::Event::MouseWheelMoved: {
 		if (event.mouseWheel.delta < 0) {
-			_world->emit<ZoomCameraEvent>({ 1.5f });
+			_zoomCamera(1.5f);
 		}
 		else
 		{
-			_world->emit<ZoomCameraEvent>({ 0.5f });
+			_zoomCamera(0.5f);
+			
 		}
 	}
 	break;
@@ -390,6 +386,18 @@ void Game::_processMouseMovement() {
 		});
 		_prevMouseCoords = sf::Mouse::getPosition(*_window);
 	}
+}
+
+void Game::_zoomCamera(float zoomFactor) {
+	//spdlog::get(loggerName)->trace("MapSystem: ZoomCameraEvent received. Zoom factor {}", event.zoomFactor);
+	if (_curCameraZoom * zoomFactor > maxCameraZoom || _curCameraZoom * zoomFactor < minCameraZoom) {
+		return;
+	}
+	sf::View v = _window->getView();
+	v.zoom(zoomFactor);
+	_window->setView(v);
+	_curCameraZoom *= zoomFactor;
+	_mouseSprite.scale(sf::Vector2f(zoomFactor, zoomFactor));
 }
 
 bool Game::_settlementHasWaresForBuilding(const BuildingSpecification& bs) {

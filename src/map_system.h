@@ -17,7 +17,6 @@ namespace Archipelago {
 		public EventSubscriber<MouseMovedEvent>,
 		public EventSubscriber<MoveCameraEvent>,
 		public EventSubscriber<MoveCameraToMapCenterEvent>,
-		public EventSubscriber<ZoomCameraEvent>,
 		public EventSubscriber<ConvertScreenToMapCoordsEvent>,
 		public EventSubscriber<ConvertMapToScreenCoordsEvent>,
 		public EventSubscriber<ShowNaturalResourcesEvent>,
@@ -32,7 +31,6 @@ namespace Archipelago {
 		virtual void receive(World* world, const LoadMapEvent& event) override;
 		virtual void receive(World* world, const MouseMovedEvent& event) override;
 		virtual void receive(World* world, const MoveCameraEvent& event) override;
-		virtual void receive(World* world, const ZoomCameraEvent& event) override;
 		virtual void receive(World* world, const MoveCameraToMapCenterEvent& event) override;
 		virtual void receive(World* world, const ConvertScreenToMapCoordsEvent& event) override;
 		virtual void receive(World* world, const ConvertMapToScreenCoordsEvent& event) override;
@@ -45,7 +43,6 @@ namespace Archipelago {
 		unsigned int _mapHeight;
 		unsigned int _tileWidth;
 		unsigned int _tileHeight;
-		float _curCameraZoom;
 		bool _showNaturalResources;
 		size_t _currentHighlightedEntity;
 

@@ -17,10 +17,6 @@ struct MoveCameraToMapCenterEvent {
 	const bool orly;
 };
 
-struct ZoomCameraEvent {
-	const float zoomFactor;
-};
-
 struct ConvertScreenToMapCoordsEvent {
 	sf::Vector2f& coords;
 };

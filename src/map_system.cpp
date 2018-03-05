@@ -5,24 +5,17 @@
 
 using namespace Archipelago;
 
-namespace Archipelago {
-	const float maxCameraZoom{ 3.0f };
-	const float minCameraZoom{ 0.2f };
-}
-
 void MapSystem::configure(World* world) {
 	spdlog::get(loggerName)->trace("MapSystem::configure started");
 	world->subscribe<LoadMapEvent>(this);
 	world->subscribe<MouseMovedEvent>(this);
 	world->subscribe<MoveCameraEvent>(this);
 	world->subscribe<MoveCameraToMapCenterEvent>(this);
-	world->subscribe<ZoomCameraEvent>(this);
 	world->subscribe<ConvertScreenToMapCoordsEvent>(this);
 	world->subscribe<ConvertMapToScreenCoordsEvent>(this);
 	world->subscribe<ShowNaturalResourcesEvent>(this);
 	world->subscribe<RequestHighlightedEntityEvent>(this);
 	world->subscribe<RenderMapEvent>(this);
-	_curCameraZoom = 1.0f;
 	_showNaturalResources = false;
 	_currentHighlightedEntity = 0;
 }
@@ -33,7 +26,6 @@ void MapSystem::unconfigure(World* world) {
 	world->unsubscribe<MouseMovedEvent>(this);
 	world->unsubscribe<MoveCameraEvent>(this);
 	world->unsubscribe<MoveCameraToMapCenterEvent>(this);
-	world->unsubscribe<ZoomCameraEvent>(this);
 	world->unsubscribe<ConvertScreenToMapCoordsEvent>(this);
 	world->unsubscribe<ConvertMapToScreenCoordsEvent>(this);
 	world->unsubscribe<ShowNaturalResourcesEvent>(this);
@@ -150,17 +142,6 @@ void MapSystem::receive(World* world, const MoveCameraToMapCenterEvent& event) {
 	sf::View view = _game.getRenderWindow().getView();
 	view.setCenter(static_cast<float>(_tileWidth) / 2, static_cast<float>(_tileHeight * _mapHeight) / 2);
 	_game.getRenderWindow().setView(view);
-}
-
-void MapSystem::receive(World* world, const ZoomCameraEvent& event) {
-	//spdlog::get(loggerName)->trace("MapSystem: ZoomCameraEvent received. Zoom factor {}", event.zoomFactor);
-	if (_curCameraZoom * event.zoomFactor > maxCameraZoom || _curCameraZoom * event.zoomFactor < minCameraZoom) {
-		return;
-	}
-	sf::View v = _game.getRenderWindow().getView();
-	v.zoom(event.zoomFactor);
-	_game.getRenderWindow().setView(v);
-	_curCameraZoom *= event.zoomFactor;
 }
 
 void MapSystem::receive(World* world, const ConvertScreenToMapCoordsEvent& event) {

@@ -12,6 +12,8 @@ namespace Archipelago {
 	extern const std::string& loggerName;
 
 	enum class MouseState { Normal = 0, BuildingPlacement = 1 };
+	const float maxCameraZoom{ 3.0f };
+	const float minCameraZoom{ 0.2f };
 
 	/** Main game class, entry point.
 	* Loads, configures and initialises all the components
@@ -44,6 +46,7 @@ namespace Archipelago {
 		void _draw();
 		void _setMouseCursorNormal();
 		void _processMouseMovement();
+		void _zoomCamera(float zoomFactor);
 		bool _requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID);
 		bool _settlementHasWaresForBuilding(const BuildingSpecification& bs);
 		void _placeBuilding();
@@ -80,6 +83,7 @@ namespace Archipelago {
 		unsigned int _fps;
 		bool _isMovingCamera;
 		sf::Vector2i _prevMouseCoords;
+		float _curCameraZoom;
 		sf::Clock _clock;
 	};
 
