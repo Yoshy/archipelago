@@ -29,6 +29,7 @@ namespace Archipelago {
 
 		sf::RenderWindow& getRenderWindow() const { return *_window; };
 		Archipelago::AssetRegistry& getAssetRegistry() const { return *_assetRegistry; }
+		ECS::World* getWorld() const { return _world; };
 		const float getRenderWindowWidth() const { return _windowWidth; };
 		const float getRenderWindowHeight() const { return _windowHeight; };
 		std::string composeGameTimeString(void);
@@ -78,7 +79,6 @@ namespace Archipelago {
 		std::string _statusString;
 		sf::Time _accumulatedTime{ sf::Time::Zero };
 		int _cameraMoveIntervalCooldown; // milliseconds
-		int _terrainInfoWindowShowCooldown;
 		unsigned int _numThreads;
 		unsigned int _fps;
 		bool _isMovingCamera;

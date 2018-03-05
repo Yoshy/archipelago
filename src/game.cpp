@@ -14,7 +14,6 @@ namespace Archipelago {
 	extern const std::string& loggerName{ gameName + "_logger" };
 	const std::string& mapFileName{ "assets/maps/default_map.json" };
 	const size_t stringReservationSize{ 100 };
-	const int terrainInfoShowInterval{ 500 }; /// if no mouse movement within interval, then show terrain info window										  
 	// Time constants
 	const unsigned int gameMonthDurationNormal{ 30 };
 	const unsigned int gameMonthDurationFast{ 10 };
@@ -87,7 +86,6 @@ void Game::init() {
 	// Init game variables
 	_statusString.reserve(stringReservationSize);
 	_cameraMoveIntervalCooldown = cameraMoveInterval;
-	_terrainInfoWindowShowCooldown = 0;
 	_mouseState = MouseState::Normal;
 
 	// Init game subsystems
@@ -102,19 +100,21 @@ void Game::init() {
 	_world->registerSystem(new Archipelago::MapSystem(*this));
 	_world->emit<LoadMapEvent>({ mapFileName });
 	_world->emit<MoveCameraToMapCenterEvent>({ true });
-
 	_initSettlementGoods();
+
 	_ui = std::make_unique<Archipelago::Ui>(*this);
+	_ui->updateSettlementWares();
 
 	// Game time variables
 	_gameTime = 0;
 	_currentGameMonthDuration = gameMonthDurationNormal;
-
-
+	_ui->updateGameTimeString();
 }
 
 void Game::shutdown() {
+	_ui.release(); // UI must be destroyed before world, because it need world to unsubscribe from its events
 	_world->destroyWorld();
+	_assetRegistry.release();
 	_logger->info("** Archipelago finishing **");
 	_logger->flush();
 }
@@ -122,6 +122,7 @@ void Game::shutdown() {
 void Game::run() {
 	sf::Event event;
 	sf::Time frameTime;
+
 	while (_window->isOpen()) {
 		// Events & input processing
 		while (_window->pollEvent(event)) {
@@ -212,6 +213,7 @@ void Game::_processEvents(sf::Event event) {
 				_currentGameMonthDuration = gameMonthDurationSuperFast;
 				break;
 			}
+			_ui->updateGameTimeString();
 		}
 		break;
 		case sf::Keyboard::Subtract: {
@@ -223,6 +225,7 @@ void Game::_processEvents(sf::Event event) {
 				_currentGameMonthDuration = gameMonthDurationNormal;
 				break;
 			}
+			_ui->updateGameTimeString();
 		}
 		break;
 		case sf::Keyboard::Space: {
@@ -243,7 +246,6 @@ void Game::_processEvents(sf::Event event) {
 	case sf::Event::MouseMoved: {
 		_processMouseMovement();
 		_hideTerrainInfoWindow();
-		_terrainInfoWindowShowCooldown = 0;
 	}
 	break;
 	case sf::Event::MouseWheelMoved: {
@@ -324,16 +326,13 @@ void Game::_update(const sf::Time& frameTime) {
 	if (_accumulatedTime.asSeconds() >= _currentGameMonthDuration) {
 		_gameTime++;
 		_accumulatedTime = sf::Time::Zero;
+		_ui->updateGameTimeString();
 	}
 
-	_terrainInfoWindowShowCooldown += frameTime.asMilliseconds();
-
+	// Update world
 	_world->tick(0);
 
 	// Update UI
-	if (_terrainInfoWindowShowCooldown > terrainInfoShowInterval) {
-		_showTerrainInfoWindow();
-	}
 	_ui->update(frameTime.asSeconds());
 }
 
@@ -450,6 +449,7 @@ void Game::_placeBuilding() {
 			}
 		}
 	}
+	_ui->updateSettlementWares();
 	_setMouseCursorNormal();
 }
 

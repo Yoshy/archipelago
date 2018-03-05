@@ -4,6 +4,7 @@
 #include <SFGUI/SFGUI.hpp>
 #include <SFGUI/Widgets.hpp>
 #include "tile_component.h"
+#include "ui_terrain_info_window.h"
 
 namespace Archipelago {
 
@@ -14,6 +15,8 @@ namespace Archipelago {
 		Ui(Game& game);
 		void render();
 		void update(float seconds);
+		void updateSettlementWares();
+		void updateGameTimeString();
 		void handleEvent(const sf::Event& event);
 		void resizeUi(float width, float height);
 		void showTerrainInfoWindow(sf::Vector2f position, TileComponent& tile);
@@ -29,6 +32,8 @@ namespace Archipelago {
 		sfg::Window::Ptr _uiTopStatusBar;
 		sfg::Window::Ptr _uiBottomStatusBar;
 		sfg::Window::Ptr _uiMainInterfaceWindow;
-		sfg::Window::Ptr _uiTerrainInfoWindow;
+		UiTerrainInfoWindow::Ptr _uiTerrainInfoWindow;
+		float _fpsUpdateInterval; // seconds
+		float _timeSincelastFpsUpdate; // seconds
 	};
 }

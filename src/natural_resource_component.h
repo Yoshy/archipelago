@@ -11,7 +11,7 @@ namespace Archipelago {
 	*/
 	struct NaturalResourceComponent {
 		NaturalResourceComponent() : resourceSet(0) {};
-		NaturalResourceComponent(uint32_t _resourceMask) : resourceSet(_resourceMask) {};
+		NaturalResourceComponent(uint32_t _resourceSet) : resourceSet(_resourceSet) {};
 		uint32_t resourceSet;
 	};
 
