@@ -2,13 +2,13 @@
 #include <fstream>
 #include <json.hpp>
 #include "map_system.h"
+#include "building_component.h"
 
 using namespace Archipelago;
 
 void MapSystem::configure(World* world) {
 	spdlog::get(loggerName)->trace("MapSystem::configure started");
 	world->subscribe<LoadMapEvent>(this);
-	world->subscribe<MouseMovedEvent>(this);
 	world->subscribe<MoveCameraEvent>(this);
 	world->subscribe<MoveCameraToMapCenterEvent>(this);
 	world->subscribe<ConvertScreenToMapCoordsEvent>(this);
@@ -23,7 +23,6 @@ void MapSystem::configure(World* world) {
 void MapSystem::unconfigure(World* world) {
 	spdlog::get(loggerName)->trace("MapSystem::unconfigure started");
 	world->unsubscribe<LoadMapEvent>(this);
-	world->unsubscribe<MouseMovedEvent>(this);
 	world->unsubscribe<MoveCameraEvent>(this);
 	world->unsubscribe<MoveCameraToMapCenterEvent>(this);
 	world->unsubscribe<ConvertScreenToMapCoordsEvent>(this);
@@ -76,6 +75,7 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 		_game.getAssetRegistry().loadTexture(tileName, texFileName);
 		tileAtlas.insert(std::pair<int, TileComponent>(id, std::move(TileComponent())));
 		TileComponent& tileComponent = tileAtlas.at(id);
+		tileComponent.name = tileName;
 		tileComponent.sprite.setTexture(*_game.getAssetRegistry().getTexture(tileName), true);
 		tileComponent.rising = tileRising;
 	}
@@ -91,15 +91,16 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 			natresType = static_cast<NaturalResourceTypeId>((natresLayer[i] & bitMask) >> shift);
 			shift -= 8;
 			bitMask = bitMask >> 8;
+			// FIXME: Это какая-то бессмысленная хуйня, если компонент существует, то assign изменяет его, а не добавляет ещё. 
 			if (natresType != NaturalResourceTypeId::Unknown) {
-				ent->assign<NaturalResourceComponent>(natresLayer[i]);
+				ent->assign<NaturalResourceComponent>(natresType, natresLayer[i]);
 			};
 		}
 		sf::Vector2f screenCoords = _mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
 		screenCoords.y = screenCoords.y - tmpTileComponent.rising;
 		tmpTileComponent.sprite.setPosition(screenCoords);
-		ent->assign<TileComponent>(tmpTileComponent.rising, tmpTileComponent.sprite, mapX, mapY);
-		ent->assign<NaturalResourceComponent>(natresLayer[i]);
+		ent->assign<TileComponent>(tmpTileComponent.name, tmpTileComponent.rising, tmpTileComponent.sprite, mapX, mapY);
+		ent->assign<NaturalResourceComponent>(natresType, natresLayer[i]);
 		mapX++;
 		if (mapX >= _mapWidth) {
 			mapX = 0;
@@ -107,21 +108,6 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 		}
 	}
 	logger->trace("MapSystem: Map loaded. Width: {}, height: {}", _mapWidth, _mapHeight);
-}
-
-void MapSystem::receive(World* world, const MouseMovedEvent& event) {
-	//// Highlight tile, if it lies under mouse cursor
-	//sf::Vector2f mouseScreenCoords = _game.getRenderWindow().mapPixelToCoords(sf::Mouse::getPosition(_game.getRenderWindow()));
-	//sf::Vector2f mouseMapCoords = _screenToMapCoords(mouseScreenCoords);
-	//if (_currentHighlightedEntity) _currentHighlightedEntity->get<TileComponent>()->sprite.setColor(sf::Color::White);
-
-	//// FIXME: Ugly stuff. FPS killing code...
-	//world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
-	//	if (static_cast<int>(mouseMapCoords.x) == tile->x && static_cast<int>(mouseMapCoords.y) == tile->y) {
-	//		tile->sprite.setColor(sf::Color(255, 255, 255, 127));
-	//		_currentHighlightedEntity = ent;
-	//	}
-	//});
 }
 
 void MapSystem::receive(World* world, const MoveCameraEvent& event) {
@@ -173,7 +159,12 @@ void MapSystem::receive(World* world, const RenderMapEvent& event) {
 			_currentHighlightedEntity = ent->getEntityId();
 		}
 		// Draw tile
-		_game.getRenderWindow().draw(tile->sprite);
+		if (ent->has<BuildingComponent>()) {
+			_game.getRenderWindow().draw(ent->get<BuildingComponent>()->sprite);
+		}
+		else {
+			_game.getRenderWindow().draw(tile->sprite);
+		}
 		// Draw natural resources on tile
 		if (_showNaturalResources) {
 			uint32_t resourceSet = ent->get<NaturalResourceComponent>()->resourceSet;

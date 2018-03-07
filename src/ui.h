@@ -12,7 +12,7 @@ namespace Archipelago {
 
 	class Ui {
 	public:
-		Ui(Game& game);
+		Ui(std::shared_ptr<Archipelago::Game> game);
 		void render();
 		void update(float seconds);
 		void updateSettlementWares();
@@ -26,13 +26,13 @@ namespace Archipelago {
 		void _constructBottomStatusBar();
 		void _constructMainInterfaceWindow();
 		void _constructTerrainInfoWindow();
-		Archipelago::Game& _game;
+		std::shared_ptr<Archipelago::Game> _game;
 		std::unique_ptr<sfg::SFGUI> _sfgui;
 		std::unique_ptr<sfg::Desktop> _uiDesktop;
 		sfg::Window::Ptr _uiTopStatusBar;
 		sfg::Window::Ptr _uiBottomStatusBar;
 		sfg::Window::Ptr _uiMainInterfaceWindow;
-		UiTerrainInfoWindow::Ptr _uiTerrainInfoWindow;
+		std::unique_ptr<UiTerrainInfoWindow> _uiTerrainInfoWindow;
 		float _fpsUpdateInterval; // seconds
 		float _timeSincelastFpsUpdate; // seconds
 	};

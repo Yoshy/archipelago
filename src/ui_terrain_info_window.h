@@ -4,10 +4,12 @@
 #include <ECS.h>
 #include <SFGUI/Widgets.hpp>
 #include <SFML/Graphics/Sprite.hpp>
-#include "natural_resources_specification.h"
-#include "building_specification.h"
 
 namespace Archipelago {
+
+	class Game;
+	struct WaresSpecification;
+
 	extern const std::string& loggerName;
 	const float BUILDING_DESCRIPTION_LABEL_REQUISITION = 400.0f;
 
@@ -15,28 +17,28 @@ namespace Archipelago {
 
 	struct TerrainInfoWindowDataUpdateEvent {
 		bool show;
+		sf::Vector2f position;
 		TileType tileType;
-		sf::Sprite& tileSprite;
+		sf::Sprite* tileSprite;
 		std::string name; // Name of terrain tile or building
 		std::string buildingDescription; // If BUILDING, then this value contains description of building
-		BuildingTypeId prodType; // If BUILDING, then this value contains production type
+		const WaresSpecification* production; // If BUILDING, then this value contains produced wares specification
 		int amount; // If BUILDING, then this value contains production amount per month
-		NaturalResourceTypeId resourceSet; // If TERRAIN, then this value contains natural resource type
+		uint32_t resourceSet; // If TERRAIN, then this value contains natural resources on tile
 	};
 
 	class UiTerrainInfoWindow : public ECS::EventSubscriber<TerrainInfoWindowDataUpdateEvent> {
 	public:
-		typedef std::shared_ptr<UiTerrainInfoWindow> Ptr;
-		UiTerrainInfoWindow(ECS::World* world);
+		UiTerrainInfoWindow(std::shared_ptr<Archipelago::Game> game);
 		~UiTerrainInfoWindow();
 		sfg::Window::Ptr getSFGWindow() { return _window; };
 		void setPosition(sf::Vector2f position) { _window->SetPosition(position); };
 		void show(bool show) { _window->Show(show); };
 		virtual void receive(ECS::World* world, const TerrainInfoWindowDataUpdateEvent& event) override;
 	private:
-		void _addBuildingInfoLayout(sfg::Box::Ptr rootLayoutWidget);
-		void _addTerrainInfoLayout(sfg::Box::Ptr rootLayoutWidget);
-		ECS::World* _world;
+		void _addBuildingInfoLayout(sfg::Box::Ptr rootLayoutWidget, const TerrainInfoWindowDataUpdateEvent& event);
+		void _addTerrainInfoLayout(sfg::Box::Ptr rootLayoutWidget, const TerrainInfoWindowDataUpdateEvent& event);
+		std::shared_ptr<Archipelago::Game> _game;
 		sfg::Window::Ptr _window;
 		sfg::Image::Ptr _hTileSprite;
 		sfg::Label::Ptr _hTileName;

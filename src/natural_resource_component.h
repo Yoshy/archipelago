@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "natural_resources_specification.h"
 
 namespace Archipelago {
 
@@ -11,7 +12,8 @@ namespace Archipelago {
 	*/
 	struct NaturalResourceComponent {
 		NaturalResourceComponent() : resourceSet(0) {};
-		NaturalResourceComponent(uint32_t _resourceSet) : resourceSet(_resourceSet) {};
+		NaturalResourceComponent(NaturalResourceTypeId _type, uint32_t _resourceSet) : type(_type), resourceSet(_resourceSet) {};
+		NaturalResourceTypeId type;
 		uint32_t resourceSet;
 	};
 

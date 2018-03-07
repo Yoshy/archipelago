@@ -2,7 +2,7 @@
 	{
 		"id": 1,
 		"name": "Base camp",
-		"description": "Base camp is the first building. It gives some initial resources. May be placed on flatlands tile",
+		"description": "Base camp is the first building. It gives some initial resources. Must be placed on plains",
 		"icon": "assets/textures/building_base_camp_1.png",
 		"tile_rising": 0,
 		"natres_required": 1,
@@ -32,7 +32,7 @@
 	{
 		"id": 2,
 		"name": "Woodcutter",
-		"description": "The Woodcutter produces 1 wood per month. Must be placed on a tile with forest",
+		"description": "Woodcutter building produces wood. Must be placed on forest",
 		"icon": "assets/textures/building_woodcutter_1.png",
 		"tile_rising": 3,
 		"natres_required": 2,
@@ -54,7 +54,7 @@
 	{
 		"id": 3,
 		"name": "Farm",
-		"description": "Farm grow crops. May be placed on flatlands tile",
+		"description": "Farm grow crops. Must be placed on plains",
 		"icon": "assets/textures/building_farm_1.png",
 		"tile_rising": 6,
 		"natres_required": 1,

@@ -13,7 +13,7 @@ namespace Archipelago
 
 using namespace Archipelago;
 
-Ui::Ui(Game& game): _game(game), _fpsUpdateInterval(UI_FPS_UPDATE_INTERVAL), _timeSincelastFpsUpdate(0)
+Ui::Ui(std::shared_ptr<Archipelago::Game> game): _game(game), _fpsUpdateInterval(UI_FPS_UPDATE_INTERVAL), _timeSincelastFpsUpdate(0)
 {
 	_sfgui = std::make_unique<sfg::SFGUI>();
 	_uiDesktop = std::make_unique<sfg::Desktop>();
@@ -21,19 +21,19 @@ Ui::Ui(Game& game): _game(game), _fpsUpdateInterval(UI_FPS_UPDATE_INTERVAL), _ti
 	_constructBottomStatusBar();
 	_constructMainInterfaceWindow();
 	_constructTerrainInfoWindow();
-	resizeUi(_game.getRenderWindowWidth(), _game.getRenderWindowHeight());
+	resizeUi(_game->getRenderWindowWidth(), _game->getRenderWindowHeight());
 }
 
 void Ui::render()
 {
-	_sfgui->Display(_game.getRenderWindow());
+	_sfgui->Display(_game->getRenderWindow());
 }
 
 void Ui::update(float seconds)
 {
 	_timeSincelastFpsUpdate += seconds;
 	if (_timeSincelastFpsUpdate > _fpsUpdateInterval) {
-		std::dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(UI_BOTTOM_STATUSBAR_LABEL_ID))->SetText(_game.getStatusString());
+		std::dynamic_pointer_cast<sfg::Label>(_uiBottomStatusBar->GetWidgetById(UI_BOTTOM_STATUSBAR_LABEL_ID))->SetText(_game->getStatusString());
 		_timeSincelastFpsUpdate = 0;
 	}
 
@@ -41,14 +41,14 @@ void Ui::update(float seconds)
 }
 
 void Ui::updateSettlementWares() {
-	for (unsigned int wareIndex = 0; wareIndex < _game.getSettlementWaresNumber(); wareIndex++) {
+	for (unsigned int wareIndex = 0; wareIndex < _game->getSettlementWaresNumber(); wareIndex++) {
 		auto s = UI_TOP_STATUSBAR_GOODS_LABEL_ID + std::to_string(wareIndex);
-		std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(s))->SetText(std::to_string(_game.getWareAmount(wareIndex)));
+		std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(s))->SetText(std::to_string(_game->getWareAmount(wareIndex)));
 	};
 }
 
 void Ui::updateGameTimeString() {
-	std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(UI_TOP_STATUSBAR_GAME_TIME_LABEL_ID))->SetText(_game.composeGameTimeString());
+	std::dynamic_pointer_cast<sfg::Label>(_uiTopStatusBar->GetWidgetById(UI_TOP_STATUSBAR_GAME_TIME_LABEL_ID))->SetText(_game->composeGameTimeString());
 }
 
 void Ui::handleEvent(const sf::Event& event)
@@ -66,9 +66,9 @@ void Ui::resizeUi(float width, float height)
 
 	_uiMainInterfaceWindow->SetAllocation(sf::FloatRect(0, ui_StatusBarHeight, 0, height - 2.0f * ui_StatusBarHeight));
 
-	sf::View v = _game.getRenderWindow().getView();
+	sf::View v = _game->getRenderWindow().getView();
 	v.setSize(width, height);
-	_game.getRenderWindow().setView(v);
+	_game->getRenderWindow().setView(v);
 };
 
 void Ui::showTerrainInfoWindow(sf::Vector2f position, TileComponent& tile) {
@@ -88,9 +88,9 @@ void Ui::_constructTopStatusBar() {
 	auto mainBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
 	auto waresBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 0.0f);
 	waresBox->SetSpacing(10.0f);
-	for (unsigned int wareIndex = 0; wareIndex < _game.getSettlementWaresNumber(); wareIndex++) {
-		auto wareIcon = sfg::Image::Create(_game.getWareIcon(wareIndex));
-		auto waresAmountText = sfg::Label::Create(std::to_string(_game.getWareAmount(wareIndex)));
+	for (unsigned int wareIndex = 0; wareIndex < _game->getSettlementWaresNumber(); wareIndex++) {
+		auto wareIcon = sfg::Image::Create(_game->getWareIcon(wareIndex));
+		auto waresAmountText = sfg::Label::Create(std::to_string(_game->getWareAmount(wareIndex)));
 		auto spacer = sfg::Label::Create("  ");
 		waresAmountText->SetAlignment(sf::Vector2f(0.0f, 0.5f));
 		waresAmountText->SetId(UI_TOP_STATUSBAR_GOODS_LABEL_ID + std::to_string(wareIndex));
@@ -123,10 +123,10 @@ void Ui::_constructMainInterfaceWindow() {
 
 	sf::Image buildingIconImg;
 	std::shared_ptr<sfg::Box> buildingBox;
-	Game* gamePtr = &_game;
+	auto gamePtr = _game;
 	BuildingSpecification bs;
 	for (BuildingTypeId bldId = BuildingTypeId::_First; bldId <= BuildingTypeId::_Last; bldId = static_cast<BuildingTypeId>(std::underlying_type<BuildingTypeId>::type(bldId) + 1)) {
-		bs = gamePtr->getAssetRegistry().getBuildingSpecification(bldId);
+		bs = _game->getAssetRegistry().getBuildingSpecification(bldId);
 		buildingIconImg = bs.icon->copyToImage();
 		buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
 		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
@@ -145,6 +145,6 @@ void Ui::_constructMainInterfaceWindow() {
 }
 
 void Ui::_constructTerrainInfoWindow() {
-	_uiTerrainInfoWindow = std::make_shared<UiTerrainInfoWindow>(_game.getWorld());
+	_uiTerrainInfoWindow = std::make_unique<UiTerrainInfoWindow>(_game);
 	_uiDesktop->Add(_uiTerrainInfoWindow->getSFGWindow());
 }

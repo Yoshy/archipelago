@@ -6,6 +6,7 @@
 #include "game.h"
 #include "asset_registry.h"
 #include "map_system.h"
+#include "building_component.h"
 
 namespace Archipelago {
 
@@ -102,7 +103,7 @@ void Game::init() {
 	_world->emit<MoveCameraToMapCenterEvent>({ true });
 	_initSettlementGoods();
 
-	_ui = std::make_unique<Archipelago::Ui>(*this);
+	_ui = std::make_unique<Archipelago::Ui>(std::shared_ptr<Game>(this));
 	_ui->updateSettlementWares();
 
 	// Game time variables
@@ -388,7 +389,6 @@ void Game::_processMouseMovement() {
 }
 
 void Game::_zoomCamera(float zoomFactor) {
-	//spdlog::get(loggerName)->trace("MapSystem: ZoomCameraEvent received. Zoom factor {}", event.zoomFactor);
 	if (_curCameraZoom * zoomFactor > maxCameraZoom || _curCameraZoom * zoomFactor < minCameraZoom) {
 		return;
 	}
@@ -432,11 +432,19 @@ void Game::_placeBuilding() {
 	if (!ent) return;
 	if (!_requiredNatresPresentOnTile(ent, _selectedForBuilding)) return;
 	ComponentHandle<TileComponent> tile = ent->get<TileComponent>();
-	tile->sprite.setTexture(*bs.icon, true);
+	if (tile == ComponentHandle<TileComponent>(nullptr)) {
+		_logger->warn("[Game::_placeBuilding] Tile component not found on world entity!");
+		return;
+	}
+	ComponentHandle<BuildingComponent> building = ent->get<BuildingComponent>();
+	if (building == ComponentHandle<BuildingComponent>(nullptr)) {
+		ent->assign<BuildingComponent>(&bs);
+		building = ent->get<BuildingComponent>();
+	}
+	building->sprite.setTexture(*(bs.icon), true);
 	sf::Vector2f pos = tile->sprite.getPosition();
 	pos.y += (float)tile->rising - (float)bs.tileRising;
-	tile->sprite.setPosition(pos);
-	tile->rising = bs.tileRising;
+	building->sprite.setPosition(pos);
 	for (auto& settWare : _settlementWares) {
 		for (auto& requiredWare : bs.waresRequired) {
 			if (settWare.type == requiredWare.type) {
@@ -460,9 +468,37 @@ size_t Game::_getEntityIDUnderCursor() {
 }
 
 void Game::_showTerrainInfoWindow() {
-	size_t ent = _getEntityIDUnderCursor();
-	if (!ent) return;
-	_ui->showTerrainInfoWindow(sf::Vector2f(sf::Mouse::getPosition(*_window)) + sf::Vector2f((float)_mouseSprite.getTextureRect().width, 0.0f), _world->getById(ent)->get<TileComponent>().get());
+	size_t entId = _getEntityIDUnderCursor();
+	if (!entId) return;
+
+	TerrainInfoWindowDataUpdateEvent tiwData;
+	tiwData.show = true;
+	tiwData.position = sf::Vector2f(sf::Mouse::getPosition(*_window)) + sf::Vector2f((float)_mouseSprite.getTextureRect().width, 0.0f);
+	if (_world->getById(entId)->has<BuildingComponent>()) {
+		auto building = _world->getById(entId)->get<BuildingComponent>().get();
+		tiwData.tileType = TileType::BUILDING;
+		tiwData.tileSprite = &building.sprite;
+		tiwData.name = building.spec->name;
+		tiwData.buildingDescription = building.spec->description;
+		auto prodType = building.spec->productionType;
+		if (prodType != WaresTypeId::Unknown) {
+			tiwData.production = &_assetRegistry->getWaresSpecification(prodType);
+			tiwData.amount = building.spec->productionAmountPerMonth;
+		}
+		else {
+			tiwData.production = nullptr;
+			tiwData.amount = 0;
+		}
+	}
+	else {
+		auto tile = _world->getById(entId)->get<TileComponent>().get();
+		auto res = _world->getById(entId)->get<NaturalResourceComponent>().get();
+		tiwData.tileType = TileType::TERRAIN;
+		tiwData.tileSprite = &(tile.sprite);
+		tiwData.name = tile.name;
+		tiwData.resourceSet = res.resourceSet;
+	}
+	_world->emit<TerrainInfoWindowDataUpdateEvent>(tiwData);
 }
 
 void Game::_hideTerrainInfoWindow() {

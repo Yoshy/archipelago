@@ -14,7 +14,6 @@ namespace Archipelago {
 
 	class MapSystem : public EntitySystem,
 		public EventSubscriber<LoadMapEvent>,
-		public EventSubscriber<MouseMovedEvent>,
 		public EventSubscriber<MoveCameraEvent>,
 		public EventSubscriber<MoveCameraToMapCenterEvent>,
 		public EventSubscriber<ConvertScreenToMapCoordsEvent>,
@@ -29,7 +28,6 @@ namespace Archipelago {
 		virtual void unconfigure(World* world) override;
 		virtual void tick(World* world, float deltaTime) override {};
 		virtual void receive(World* world, const LoadMapEvent& event) override;
-		virtual void receive(World* world, const MouseMovedEvent& event) override;
 		virtual void receive(World* world, const MoveCameraEvent& event) override;
 		virtual void receive(World* world, const MoveCameraToMapCenterEvent& event) override;
 		virtual void receive(World* world, const ConvertScreenToMapCoordsEvent& event) override;
