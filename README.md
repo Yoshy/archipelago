@@ -1,5 +1,5 @@
 # Archipelago
-Settlement building tile-based mini-game. Hobby project, not a serious business.
+Tile-based settlement building tech demo. Educational project, not a serious business.
 
 # Requirements
 * C++11 compiler

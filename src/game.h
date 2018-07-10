@@ -35,7 +35,9 @@ namespace Archipelago {
 		std::string composeGameTimeString(void);
 		const std::string& getStatusString() const { return _statusString; };
 		const size_t getSettlementWaresNumber() const { return _settlementWares.size(); };
+		bool settlementHasWareForBuilding(const BuildingSpecification& bs, WaresTypeId ware);
 		const sf::Image getWareIcon(unsigned int idx) const { return _assetRegistry->getWaresSpecification(_settlementWares[idx].type).icon->copyToImage(); };
+		const sf::Sprite getMouseSprite() { return _mouseSprite; };
 		const int getWareAmount(unsigned int idx) const { return _settlementWares[idx].amount; };
 		void onUISelectBuilding(BuildingTypeId buildingID);
 	private:
@@ -45,6 +47,7 @@ namespace Archipelago {
 		void _processInput(const sf::Time& frameTime);
 		void _update(const sf::Time& frameTime);
 		void _draw();
+		void _drawBackgroundImage();
 		void _setMouseCursorNormal();
 		void _processMouseMovement();
 		void _zoomCamera(float zoomFactor);

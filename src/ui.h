@@ -4,6 +4,7 @@
 #include <SFGUI/SFGUI.hpp>
 #include <SFGUI/Widgets.hpp>
 #include "tile_component.h"
+#include "ui_building_tip_window.h"
 #include "ui_terrain_info_window.h"
 
 namespace Archipelago {
@@ -12,7 +13,7 @@ namespace Archipelago {
 
 	class Ui {
 	public:
-		Ui(std::shared_ptr<Archipelago::Game> game);
+		Ui(Game* game);
 		void render();
 		void update(float seconds);
 		void updateSettlementWares();
@@ -26,13 +27,15 @@ namespace Archipelago {
 		void _constructBottomStatusBar();
 		void _constructMainInterfaceWindow();
 		void _constructTerrainInfoWindow();
-		std::shared_ptr<Archipelago::Game> _game;
+		void _constructBuildingTipWindow();
+		Game* _game;
 		std::unique_ptr<sfg::SFGUI> _sfgui;
 		std::unique_ptr<sfg::Desktop> _uiDesktop;
 		sfg::Window::Ptr _uiTopStatusBar;
 		sfg::Window::Ptr _uiBottomStatusBar;
 		sfg::Window::Ptr _uiMainInterfaceWindow;
 		std::unique_ptr<UiTerrainInfoWindow> _uiTerrainInfoWindow;
+		std::unique_ptr<UiBuildingTipWindow> _uiBuildingTipWindow;
 		float _fpsUpdateInterval; // seconds
 		float _timeSincelastFpsUpdate; // seconds
 	};

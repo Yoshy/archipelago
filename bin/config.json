@@ -3,7 +3,7 @@
 		"isFullscreen": false,
 		"windowWidth": 1900,
 		"windowHeight": 1000,
-		"enableVSync": false
+		"enableVSync": true
 	},
 	"audio" : {
 	

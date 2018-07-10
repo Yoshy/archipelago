@@ -7,6 +7,7 @@
 #include "asset_registry.h"
 #include "map_system.h"
 #include "building_component.h"
+#include "ui_terrain_info_window.h"
 
 namespace Archipelago {
 
@@ -83,7 +84,6 @@ void Game::init() {
 	_numThreads = std::thread::hardware_concurrency();
 	_logger->info("Host has {} cores", _numThreads);
 
-
 	// Init game variables
 	_statusString.reserve(stringReservationSize);
 	_cameraMoveIntervalCooldown = cameraMoveInterval;
@@ -96,6 +96,8 @@ void Game::init() {
 	_assetRegistry->prepareNaturalResourcesAtlas();
 	_assetRegistry->prepareBuildingAtlas();
 	_assetRegistry->loadTexture("mouse_cursor_normal", "assets/textures/mouse_cursor_normal.png");
+	_assetRegistry->loadTexture("triangle_atention", "assets/textures/triangle_atention.png");
+	_assetRegistry->loadTexture("dark_deep_space", "assets/textures/dark_deep_space.png");
 	_setMouseCursorNormal();
 	_world = World::createWorld();
 	_world->registerSystem(new Archipelago::MapSystem(*this));
@@ -103,7 +105,7 @@ void Game::init() {
 	_world->emit<MoveCameraToMapCenterEvent>({ true });
 	_initSettlementGoods();
 
-	_ui = std::make_unique<Archipelago::Ui>(std::shared_ptr<Game>(this));
+	_ui = std::make_unique<Archipelago::Ui>(this);
 	_ui->updateSettlementWares();
 
 	// Game time variables
@@ -339,6 +341,8 @@ void Game::_update(const sf::Time& frameTime) {
 
 void Game::_draw() {
 	_window->clear();
+	// Render background
+	_drawBackgroundImage();
 	// Render map
 	_world->emit<RenderMapEvent>({ true });
 	// Render UI
@@ -346,7 +350,10 @@ void Game::_draw() {
 	// Render mouse cursor
 	if (_mouseState == MouseState::BuildingPlacement) {
 		auto ent = _world->getById(_getEntityIDUnderCursor());
-		if (ent && _settlementHasWaresForBuilding(_assetRegistry->getBuildingSpecification(_selectedForBuilding)) && _requiredNatresPresentOnTile(ent, _selectedForBuilding)) {
+		if (ent &&
+			_settlementHasWaresForBuilding(_assetRegistry->getBuildingSpecification(_selectedForBuilding)) &&
+			_requiredNatresPresentOnTile(ent, _selectedForBuilding) &&
+			ent->get<BuildingComponent>() == ComponentHandle<BuildingComponent>(nullptr)) {
 			_mouseSprite.setColor(sf::Color(255, 255, 255, 127));
 		}
 		else {
@@ -356,6 +363,26 @@ void Game::_draw() {
 	_window->draw(_mouseSprite);
 	// Show everything on screen
 	_window->display();
+}
+
+void Game::_drawBackgroundImage() {
+	constexpr float PARALLAX_MULTIPLIER{ 50.f };
+	constexpr float BKG_PARALLAX_COMPENSATION_SCALE{ 1.1f };
+
+	sf::Texture* bkgTex{ _assetRegistry->getTexture("dark_deep_space") };
+	sf::Sprite bkgSpr{ *bkgTex };
+	sf::View v = getRenderWindow().getView();
+
+	sf::Vector2f viewCenter{ v.getCenter() };
+	sf::Vector2f viewSize{ v.getSize() };
+	sf::Vector2f texSize{ bkgTex->getSize() };
+	sf::Vector2f sprBaseScale{ viewSize.x / texSize.x, viewSize.y / texSize.y };
+	sf::Vector2f parallaxOffset{ viewCenter / PARALLAX_MULTIPLIER };
+
+	bkgSpr.setScale(sprBaseScale * BKG_PARALLAX_COMPENSATION_SCALE);
+	bkgSpr.setOrigin(texSize / 2.0f); // Set origin to center of texture
+	bkgSpr.setPosition(viewCenter - parallaxOffset);
+	getRenderWindow().draw(bkgSpr);
 }
 
 void Game::_setMouseCursorNormal() {
@@ -410,6 +437,20 @@ bool Game::_settlementHasWaresForBuilding(const BuildingSpecification& bs) {
 	return true;
 }
 
+bool Game::settlementHasWareForBuilding(const BuildingSpecification& bs, WaresTypeId ware) {
+	int amountNeeded{ 0 };
+	for (auto& requiredWare : bs.waresRequired) {
+		if (requiredWare.type == ware) {
+			amountNeeded = requiredWare.amount;
+		}
+	}
+	for (auto& settWare : _settlementWares) {
+		if (settWare.type == ware && settWare.amount >= amountNeeded)
+			return true;
+	}
+	return false;
+}
+
 bool Game::_requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID) {
 	auto natres = ent->get<NaturalResourceComponent>();
 	uint32_t resourseSet = 0;
@@ -440,6 +481,9 @@ void Game::_placeBuilding() {
 	if (building == ComponentHandle<BuildingComponent>(nullptr)) {
 		ent->assign<BuildingComponent>(&bs);
 		building = ent->get<BuildingComponent>();
+	}
+	else { // Tile is occupied with another building
+		return;
 	}
 	building->sprite.setTexture(*(bs.icon), true);
 	sf::Vector2f pos = tile->sprite.getPosition();

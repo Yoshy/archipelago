@@ -13,14 +13,14 @@ namespace Archipelago
 
 using namespace Archipelago;
 
-Ui::Ui(std::shared_ptr<Archipelago::Game> game): _game(game), _fpsUpdateInterval(UI_FPS_UPDATE_INTERVAL), _timeSincelastFpsUpdate(0)
+Ui::Ui(Game* game): _game(game), _fpsUpdateInterval(UI_FPS_UPDATE_INTERVAL), _timeSincelastFpsUpdate(0)
 {
 	_sfgui = std::make_unique<sfg::SFGUI>();
 	_uiDesktop = std::make_unique<sfg::Desktop>();
 	_constructTopStatusBar();
 	_constructBottomStatusBar();
-	_constructMainInterfaceWindow();
 	_constructTerrainInfoWindow();
+	_constructMainInterfaceWindow();
 	resizeUi(_game->getRenderWindowWidth(), _game->getRenderWindowHeight());
 }
 
@@ -117,13 +117,13 @@ void Ui::_constructMainInterfaceWindow() {
 	_uiMainInterfaceWindow = sfg::Window::Create();
 	_uiMainInterfaceWindow->Show(true);
 	_uiMainInterfaceWindow->SetStyle(sfg::Window::BACKGROUND);
-	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseEnter).Connect(std::bind([this] { _onTerrainInfoWindowMouseEnter(); }));
-	//_uiMainInterfaceWindow->GetSignal(sfg::Window::OnMouseLeave).Connect(std::bind([this] { _onTerrainInfoWindowMouseLeave(); }));
 	auto buildMenu = sfg::Box::Create(sfg::Box::Orientation::VERTICAL, 10.0f);
 
 	sf::Image buildingIconImg;
 	std::shared_ptr<sfg::Box> buildingBox;
 	auto gamePtr = _game;
+	_constructBuildingTipWindow();
+	auto bldWindow = _uiBuildingTipWindow.get();
 	BuildingSpecification bs;
 	for (BuildingTypeId bldId = BuildingTypeId::_First; bldId <= BuildingTypeId::_Last; bldId = static_cast<BuildingTypeId>(std::underlying_type<BuildingTypeId>::type(bldId) + 1)) {
 		bs = _game->getAssetRegistry().getBuildingSpecification(bldId);
@@ -131,7 +131,9 @@ void Ui::_constructMainInterfaceWindow() {
 		buildingBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
 		buildingBox->Pack(sfg::Image::Create(buildingIconImg), false);
 		buildingBox->Pack(sfg::Label::Create(bs.name), false);
-		buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr, bldId] {gamePtr->onUISelectBuilding(bldId); });
+		buildingBox->GetSignal(sfg::Box::OnLeftClick).Connect([gamePtr, bldId] { gamePtr->onUISelectBuilding(bldId); });
+		buildingBox->GetSignal(sfg::Box::OnMouseMove).Connect([bldWindow, bldId] { bldWindow->onMouseMove(bldId); });
+		buildingBox->GetSignal(sfg::Box::OnMouseLeave).Connect([bldWindow, bldId] { bldWindow->onMouseLeave(); });
 		buildMenu->Pack(buildingBox, false);
 	}
 
@@ -147,4 +149,9 @@ void Ui::_constructMainInterfaceWindow() {
 void Ui::_constructTerrainInfoWindow() {
 	_uiTerrainInfoWindow = std::make_unique<UiTerrainInfoWindow>(_game);
 	_uiDesktop->Add(_uiTerrainInfoWindow->getSFGWindow());
+}
+
+void Ui::_constructBuildingTipWindow() {
+	_uiBuildingTipWindow = std::make_unique<Archipelago::UiBuildingTipWindow>(_game);
+	_uiDesktop->Add(_uiBuildingTipWindow->getSFGWindow());
 }

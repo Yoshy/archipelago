@@ -29,7 +29,7 @@ namespace Archipelago {
 
 	class UiTerrainInfoWindow : public ECS::EventSubscriber<TerrainInfoWindowDataUpdateEvent> {
 	public:
-		UiTerrainInfoWindow(std::shared_ptr<Archipelago::Game> game);
+		UiTerrainInfoWindow(Game* game);
 		~UiTerrainInfoWindow();
 		sfg::Window::Ptr getSFGWindow() { return _window; };
 		void setPosition(sf::Vector2f position) { _window->SetPosition(position); };
@@ -38,7 +38,7 @@ namespace Archipelago {
 	private:
 		void _addBuildingInfoLayout(sfg::Box::Ptr rootLayoutWidget, const TerrainInfoWindowDataUpdateEvent& event);
 		void _addTerrainInfoLayout(sfg::Box::Ptr rootLayoutWidget, const TerrainInfoWindowDataUpdateEvent& event);
-		std::shared_ptr<Archipelago::Game> _game;
+		Game* _game;
 		sfg::Window::Ptr _window;
 		sfg::Image::Ptr _hTileSprite;
 		sfg::Label::Ptr _hTileName;

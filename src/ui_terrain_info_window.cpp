@@ -5,7 +5,7 @@
 
 using namespace Archipelago;
 
-UiTerrainInfoWindow::UiTerrainInfoWindow(std::shared_ptr<Archipelago::Game> game) :
+UiTerrainInfoWindow::UiTerrainInfoWindow(Game* game) :
 	_game(game),
 	_window(sfg::Window::Create(sfg::Window::BACKGROUND | sfg::Window::TITLEBAR)),
 	_hTileSprite(sfg::Image::Create()),
@@ -105,7 +105,6 @@ void UiTerrainInfoWindow::_addTerrainInfoLayout(sfg::Box::Ptr rootLayoutWidget, 
 			auto natresName = sfg::Label::Create();
 			auto natresHBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
 			rootLayoutWidget->Pack(natresHBox);
-
 			sf::Image i = _game->getAssetRegistry().getNatresSpecification(natresType).icon->copyToImage();
 			natresImage->SetImage(i);
 			natresImage->SetAlignment(sf::Vector2f(0.0f, 0.0f));

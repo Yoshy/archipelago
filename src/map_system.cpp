@@ -85,17 +85,6 @@ void MapSystem::receive(World* world, const LoadMapEvent& event) {
 		Entity* ent = world->create();
 		tmpTileComponent = tileAtlas.at(terrainLayer[i]);
 		NaturalResourceTypeId natresType;
-		uint32_t bitMask = 0xFF000000;
-		unsigned int shift = 24;
-		for (unsigned int waresIdx = 0; waresIdx < 4; waresIdx++) {
-			natresType = static_cast<NaturalResourceTypeId>((natresLayer[i] & bitMask) >> shift);
-			shift -= 8;
-			bitMask = bitMask >> 8;
-			// FIXME: Это какая-то бессмысленная хуйня, если компонент существует, то assign изменяет его, а не добавляет ещё. 
-			if (natresType != NaturalResourceTypeId::Unknown) {
-				ent->assign<NaturalResourceComponent>(natresType, natresLayer[i]);
-			};
-		}
 		sf::Vector2f screenCoords = _mapToScreenCoords(sf::Vector2f(static_cast<float>(mapX), static_cast<float>(mapY)));
 		screenCoords.y = screenCoords.y - tmpTileComponent.rising;
 		tmpTileComponent.sprite.setPosition(screenCoords);

@@ -1,6 +1,6 @@
 [
 	{ "id": 1, "name": "Fertile soil", "icon": "assets/textures/resource_soil_small.png" },
-	{ "id": 2, "name": "Wood", "icon": "assets/textures/resource_forest_small.png" },
+	{ "id": 2, "name": "Trees", "icon": "assets/textures/resource_tree_small.png" },
 	{ "id": 3, "name": "Salt Water", "icon": "assets/textures/resource_saltwater_small.png" },
 	{ "id": 4, "name": "Fresh Water", "icon": "assets/textures/resource_freshwater_small.png" }
 ]
