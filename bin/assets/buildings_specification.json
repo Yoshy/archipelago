@@ -26,8 +26,7 @@
 				"amount": 5
 			}
 		],
-		"production_type": 0,
-		"production_amount": 0
+		"wares_produced": []
 	},
 	{
 		"id": 2,
@@ -48,8 +47,12 @@
 		],
 		"building_required": [ 1 ],
 		"provided_instant_wares": [],
-		"production_type": 5,
-		"production_amount": 1
+		"wares_produced": [
+			{
+				"type": 5,
+				"amount": 1
+			}
+		]
 	},
 	{
 		"id": 3,
@@ -70,7 +73,11 @@
 		],
 		"building_required": [],
 		"provided_instant_wares": [],
-		"production_type": 4,
-		"production_amount": 1
+		"wares_produced": [
+			{
+				"type": 4,
+				"amount": 1
+			}
+		]
 	}
 ]

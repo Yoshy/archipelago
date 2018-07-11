@@ -9,9 +9,7 @@ UiTerrainInfoWindow::UiTerrainInfoWindow(Game* game) :
 	_game(game),
 	_window(sfg::Window::Create(sfg::Window::BACKGROUND | sfg::Window::TITLEBAR)),
 	_hTileSprite(sfg::Image::Create()),
-	_hTileName(sfg::Label::Create("TileName")),
-	_hProdTypeLabel(sfg::Label::Create("Unknown")),
-	_hProdAmountLabel(sfg::Label::Create("0"))
+	_hTileName(sfg::Label::Create("TileName"))
 {
 	_game->getWorld()->subscribe<TerrainInfoWindowDataUpdateEvent>(this);
 
@@ -62,29 +60,18 @@ void UiTerrainInfoWindow::_addBuildingInfoLayout(sfg::Box::Ptr rootLayoutWidget,
 	rootLayoutWidget->Pack(buildingDescription);
 	rootLayoutWidget->Pack(sfg::Separator::Create(sfg::Separator::Orientation::HORIZONTAL));
 
-	auto productionTypeHBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
-	auto bpl = sfg::Label::Create("Building production:");
+	auto bpl = sfg::Label::Create("Building production per month:");
 	bpl->SetAlignment(sf::Vector2f(0.0f, 0.0f));
-	productionTypeHBox->Pack(bpl);
-	_hProdTypeLabel->SetAlignment(sf::Vector2f(1.0f, 0.0f));
-	productionTypeHBox->Pack(_hProdTypeLabel);
-	rootLayoutWidget->Pack(productionTypeHBox);
-
-	auto productionAmountHBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
-	auto papm = sfg::Label::Create("Production amount per month:");
-	papm->SetAlignment(sf::Vector2f(0.0f, 0.0f));
-	productionAmountHBox->Pack(papm);
-	_hProdAmountLabel->SetAlignment(sf::Vector2f(1.0f, 0.0f));
-	productionAmountHBox->Pack(_hProdAmountLabel);
-	rootLayoutWidget->Pack(productionAmountHBox);
-
-	if (event.production != nullptr) {
-		_hProdTypeLabel->SetText(event.production->name);
-		_hProdAmountLabel->SetText(std::to_string(event.amount));
-	}
-	else {
-		_hProdTypeLabel->SetText("Nothing");
-		_hProdAmountLabel->SetText("");
+	rootLayoutWidget->Pack(bpl);
+	for (WaresStack ws : *event.production) {
+		auto productionInfoHBox = sfg::Box::Create(sfg::Box::Orientation::HORIZONTAL, 10.0f);
+		auto prodTypeLabel{ sfg::Label::Create(_game->getAssetRegistry().getWaresSpecification(ws.type).name) };
+		prodTypeLabel->SetAlignment(sf::Vector2f(0.0f, 0.0f));
+		productionInfoHBox->Pack(prodTypeLabel);
+		rootLayoutWidget->Pack(productionInfoHBox);
+		auto prodAmountLabel{ sfg::Label::Create(std::to_string(ws.amount)) };
+		prodAmountLabel->SetAlignment(sf::Vector2f(0.0f, 0.0f));
+		productionInfoHBox->Pack(prodAmountLabel);
 	}
 }
 

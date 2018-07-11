@@ -329,6 +329,7 @@ void Game::_update(const sf::Time& frameTime) {
 	if (_accumulatedTime.asSeconds() >= _currentGameMonthDuration) {
 		_gameTime++;
 		_accumulatedTime = sf::Time::Zero;
+		_updateSettlement();
 		_ui->updateGameTimeString();
 	}
 
@@ -424,6 +425,24 @@ void Game::_zoomCamera(float zoomFactor) {
 	_window->setView(v);
 	_curCameraZoom *= zoomFactor;
 	_mouseSprite.scale(sf::Vector2f(zoomFactor, zoomFactor));
+}
+
+void Game::_updateSettlement() {
+	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
+		if (ent->has<BuildingComponent>()) {
+			const BuildingSpecification& bs{ *ent->get<BuildingComponent>()->spec };
+			for (WaresStack waresStack : bs.waresProduced) {
+				WaresTypeId type{ waresStack.type };
+				int amount{ waresStack.amount };
+				for (auto& settWare : _settlementWares) {
+					if (settWare.type == type) {
+						settWare.amount += amount;
+					}
+				}
+			}
+			_ui->updateSettlementWares();
+		}
+	});
 }
 
 bool Game::_settlementHasWaresForBuilding(const BuildingSpecification& bs) {
@@ -524,15 +543,7 @@ void Game::_showTerrainInfoWindow() {
 		tiwData.tileSprite = &building.sprite;
 		tiwData.name = building.spec->name;
 		tiwData.buildingDescription = building.spec->description;
-		auto prodType = building.spec->productionType;
-		if (prodType != WaresTypeId::Unknown) {
-			tiwData.production = &_assetRegistry->getWaresSpecification(prodType);
-			tiwData.amount = building.spec->productionAmountPerMonth;
-		}
-		else {
-			tiwData.production = nullptr;
-			tiwData.amount = 0;
-		}
+		tiwData.production = &building.spec->waresProduced;
 	}
 	else {
 		auto tile = _world->getById(entId)->get<TileComponent>().get();

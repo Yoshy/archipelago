@@ -51,6 +51,7 @@ namespace Archipelago {
 		void _setMouseCursorNormal();
 		void _processMouseMovement();
 		void _zoomCamera(float zoomFactor);
+		void _updateSettlement(void);
 		bool _requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID);
 		bool _settlementHasWaresForBuilding(const BuildingSpecification& bs);
 		void _placeBuilding();

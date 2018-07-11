@@ -17,10 +17,9 @@ namespace Archipelago {
 		unsigned int tileRising;
 		NaturalResourceTypeId natresRequired;
 		std::vector<WaresStack> waresRequired;
-		std::vector<BuildingTypeId> buildingRequired;
+		std::vector<BuildingTypeId> buildingsRequired;
 		std::vector<WaresStack> providedInstantWares;
-		WaresTypeId productionType;
-		unsigned int productionAmountPerMonth;
+		std::vector<WaresStack> waresProduced;
 	};
 
 }

@@ -115,7 +115,7 @@ void AssetRegistry::prepareBuildingAtlas() {
 			}
 			std::vector<int> briv = std::move(buildingSpec.at("building_required").get<std::vector<int>>());
 			for (auto br : briv) {
-				bs.buildingRequired.push_back(static_cast<BuildingTypeId>(br));
+				bs.buildingsRequired.push_back(static_cast<BuildingTypeId>(br));
 			}
 			for (auto providedInstantWare : buildingSpec.at("provided_instant_wares")) {
 				WaresStack ws;
@@ -123,8 +123,12 @@ void AssetRegistry::prepareBuildingAtlas() {
 				ws.amount = providedInstantWare.at("amount").get<int>();
 				bs.providedInstantWares.push_back(ws);
 			}
-			bs.productionType = static_cast<WaresTypeId>(buildingSpec.at("production_type").get<int>());
-			bs.productionAmountPerMonth = buildingSpec.at("production_amount").get<unsigned int>();
+			for (auto wareProd : buildingSpec.at("wares_produced")) {
+				WaresStack ws;
+				ws.type = static_cast<WaresTypeId>(wareProd.at("type").get<int>());
+				ws.amount = wareProd.at("amount").get<int>();
+				bs.waresProduced.push_back(ws);
+			}
 			_buildingAtlas.insert(std::pair<BuildingTypeId, Archipelago::BuildingSpecification>(static_cast<BuildingTypeId>(buildingSpec.at("id").get<int>()), std::move(bs)));
 			spdlog::get(loggerName)->trace("Building specification loaded: '{}'", (buildingSpec.at("name")).get<std::string>());
 		}

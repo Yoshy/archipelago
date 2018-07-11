@@ -4,6 +4,7 @@
 #include <ECS.h>
 #include <SFGUI/Widgets.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include "wares_specification.h"
 
 namespace Archipelago {
 
@@ -22,7 +23,7 @@ namespace Archipelago {
 		sf::Sprite* tileSprite;
 		std::string name; // Name of terrain tile or building
 		std::string buildingDescription; // If BUILDING, then this value contains description of building
-		const WaresSpecification* production; // If BUILDING, then this value contains produced wares specification
+		const std::vector<WaresStack>* production; // If BUILDING, then this value contains produced wares
 		int amount; // If BUILDING, then this value contains production amount per month
 		uint32_t resourceSet; // If TERRAIN, then this value contains natural resources on tile
 	};
@@ -42,8 +43,6 @@ namespace Archipelago {
 		sfg::Window::Ptr _window;
 		sfg::Image::Ptr _hTileSprite;
 		sfg::Label::Ptr _hTileName;
-		sfg::Label::Ptr _hProdTypeLabel;
-		sfg::Label::Ptr _hProdAmountLabel;
 	};
 
 }
