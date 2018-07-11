@@ -353,6 +353,7 @@ void Game::_draw() {
 		auto ent = _world->getById(_getEntityIDUnderCursor());
 		if (ent &&
 			_settlementHasWaresForBuilding(_assetRegistry->getBuildingSpecification(_selectedForBuilding)) &&
+			!_settlementExceededAllowedBuildingAmount(_assetRegistry->getBuildingSpecification(_selectedForBuilding)) &&
 			_requiredNatresPresentOnTile(ent, _selectedForBuilding) &&
 			ent->get<BuildingComponent>() == ComponentHandle<BuildingComponent>(nullptr)) {
 			_mouseSprite.setColor(sf::Color(255, 255, 255, 127));
@@ -470,6 +471,25 @@ bool Game::settlementHasWareForBuilding(const BuildingSpecification& bs, WaresTy
 	return false;
 }
 
+bool Game::_settlementExceededAllowedBuildingAmount(const BuildingSpecification& bs) {
+	if (bs.maxAllowedOnMap == 0) {
+		return false;
+	}
+	unsigned int buildingsCount{ 0 };
+	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
+		if (ent->has<BuildingComponent>()) {
+			const BuildingSpecification& this_bs{ *ent->get<BuildingComponent>()->spec };
+			if (this_bs.id == bs.id) {
+				++buildingsCount;
+			}
+		}
+	});
+	if (buildingsCount >= bs.maxAllowedOnMap) {
+		return true;
+	}
+	return false;
+}
+
 bool Game::_requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID) {
 	auto natres = ent->get<NaturalResourceComponent>();
 	uint32_t resourseSet = 0;
@@ -486,7 +506,7 @@ bool Game::_requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildin
 void Game::_placeBuilding() {
 	if (_mouseState != MouseState::BuildingPlacement) return;
 	const BuildingSpecification& bs = _assetRegistry->getBuildingSpecification(_selectedForBuilding);
-	if (!_settlementHasWaresForBuilding(bs)) return;
+	if (!_settlementHasWaresForBuilding(bs) || _settlementExceededAllowedBuildingAmount(bs)) return;
 	if (_getEntityIDUnderCursor() == 0) return;
 	auto ent = _world->getById(_getEntityIDUnderCursor());
 	if (!ent) return;

@@ -101,11 +101,13 @@ void AssetRegistry::prepareBuildingAtlas() {
 	try {
 		for (auto buildingSpec : buildingSpecJSON) {
 			BuildingSpecification bs;
+			bs.id = static_cast<BuildingTypeId>(buildingSpec.at("id").get<int>());
 			bs.name = std::move(buildingSpec.at("name").get<std::string>());
 			bs.description = std::move(buildingSpec.at("description").get<std::string>());
 			loadTexture(buildingSpec.at("name"), buildingSpec.at("icon"));
 			bs.icon = getTexture(buildingSpec.at("name"));
 			bs.tileRising = buildingSpec.at("tile_rising");
+			bs.maxAllowedOnMap = buildingSpec.at("max_allowed_on_map");
 			bs.natresRequired = static_cast<NaturalResourceTypeId>(buildingSpec.at("natres_required").get<int>());
 			for (auto wareReq : buildingSpec.at("wares_required")) {
 				WaresStack ws;
@@ -129,7 +131,7 @@ void AssetRegistry::prepareBuildingAtlas() {
 				ws.amount = wareProd.at("amount").get<int>();
 				bs.waresProduced.push_back(ws);
 			}
-			_buildingAtlas.insert(std::pair<BuildingTypeId, Archipelago::BuildingSpecification>(static_cast<BuildingTypeId>(buildingSpec.at("id").get<int>()), std::move(bs)));
+			_buildingAtlas.insert(std::pair<BuildingTypeId, Archipelago::BuildingSpecification>(bs.id, std::move(bs)));
 			spdlog::get(loggerName)->trace("Building specification loaded: '{}'", (buildingSpec.at("name")).get<std::string>());
 		}
 	}

@@ -54,6 +54,7 @@ namespace Archipelago {
 		void _updateSettlement(void);
 		bool _requiredNatresPresentOnTile(ECS::Entity* ent, BuildingTypeId buildingID);
 		bool _settlementHasWaresForBuilding(const BuildingSpecification& bs);
+		bool _settlementExceededAllowedBuildingAmount(const BuildingSpecification& bs);
 		void _placeBuilding();
 		size_t _getEntityIDUnderCursor();
 		void _showTerrainInfoWindow();

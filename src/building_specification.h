@@ -11,10 +11,12 @@ namespace Archipelago {
 	enum class BuildingTypeId { Unknown = 0, BaseCamp = 1, Woodcutter = 2, Farm = 3, _Last = Farm, _First = BaseCamp };
 
 	struct BuildingSpecification {
+		BuildingTypeId id;
 		std::string name;
 		std::string description;
 		sf::Texture* icon; // non-owning pointer
 		unsigned int tileRising;
+		unsigned int maxAllowedOnMap; // 0 = unlimited
 		NaturalResourceTypeId natresRequired;
 		std::vector<WaresStack> waresRequired;
 		std::vector<BuildingTypeId> buildingsRequired;
