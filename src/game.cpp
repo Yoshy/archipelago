@@ -429,20 +429,18 @@ void Game::_zoomCamera(float zoomFactor) {
 }
 
 void Game::_updateSettlement() {
-	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
-		if (ent->has<BuildingComponent>()) {
-			const BuildingSpecification& bs{ *ent->get<BuildingComponent>()->spec };
-			for (WaresStack waresStack : bs.waresProduced) {
-				WaresTypeId type{ waresStack.type };
-				int amount{ waresStack.amount };
-				for (auto& settWare : _settlementWares) {
-					if (settWare.type == type) {
-						settWare.amount += amount;
-					}
+	_world->each<BuildingComponent>([&](Entity* ent, ComponentHandle<BuildingComponent> bc) {
+		const BuildingSpecification& bs{ *bc->spec };
+		for (WaresStack waresStack : bs.waresProduced) {
+			WaresTypeId type{ waresStack.type };
+			int amount{ waresStack.amount };
+			for (auto& settWare : _settlementWares) {
+				if (settWare.type == type) {
+					settWare.amount += amount;
 				}
 			}
-			_ui->updateSettlementWares();
 		}
+		_ui->updateSettlementWares();
 	});
 }
 
@@ -476,12 +474,10 @@ bool Game::_settlementExceededAllowedBuildingAmount(const BuildingSpecification&
 		return false;
 	}
 	unsigned int buildingsCount{ 0 };
-	_world->each<TileComponent>([&](Entity* ent, ComponentHandle<TileComponent> tile) {
-		if (ent->has<BuildingComponent>()) {
-			const BuildingSpecification& this_bs{ *ent->get<BuildingComponent>()->spec };
-			if (this_bs.id == bs.id) {
-				++buildingsCount;
-			}
+	_world->each<BuildingComponent>([&](Entity* ent, ComponentHandle<BuildingComponent> bc) {
+		const BuildingSpecification& this_bs{ *bc->spec };
+		if (this_bs.id == bs.id) {
+			++buildingsCount;
 		}
 	});
 	if (buildingsCount >= bs.maxAllowedOnMap) {
