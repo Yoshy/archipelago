@@ -177,8 +177,12 @@ void Game::_initRenderSystem() {
 	sf::VideoMode videoMode(static_cast<unsigned int>(_windowWidth), static_cast<unsigned int>(_windowHeight));
 	if (_isFullscreen) {
 		videoMode = videoMode.getDesktopMode();
+		_windowWidth = videoMode.width;
+		_windowHeight = videoMode.height;
 		windowStyle = sf::Style::Fullscreen;
-	};
+	}
+	else {
+	}
 	_window = std::make_unique<sf::RenderWindow>(videoMode, gameName, windowStyle);
 	_window->setVerticalSyncEnabled(_enable_vsync);
 	_window->setMouseCursorVisible(false);

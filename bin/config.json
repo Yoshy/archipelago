@@ -1,6 +1,6 @@
 {
 	"video" : {
-		"isFullscreen": false,
+		"isFullscreen": true,
 		"windowWidth": 1900,
 		"windowHeight": 1000,
 		"enableVSync": true
